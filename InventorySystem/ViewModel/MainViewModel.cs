@@ -1,8 +1,20 @@
-﻿namespace InventorySystem.ViewModel
+﻿using InventorySystem.Interface;
+
+namespace InventorySystem.ViewModel
 {
-    internal class MainViewModel
+    public class MainViewModel
     {
-        public SpreadSheetViewModel SpreadSheetVM { get; set; } = new SpreadSheetViewModel();
-        public DashboardViewModel DashboardVM { get; set; } = new DashboardViewModel();
+        public SpreadSheetViewModel SpreadSheetVM { get; set; }
+        public DashboardViewModel DashboardVM { get; set; }
+        private IDatabaseService _service;
+
+        public MainViewModel(IDatabaseService service, SpreadSheetViewModel spreadSheet, DashboardViewModel dashboard)
+        {
+            _service = service;
+            SpreadSheetVM = spreadSheet;
+            DashboardVM = dashboard;
+
+            _service.InitializeDatabase();
+        }
     }
 }

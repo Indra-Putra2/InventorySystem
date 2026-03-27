@@ -1,33 +1,63 @@
-﻿using InventorySystem.Model;
+﻿using InventorySystem.Interface;
+using InventorySystem.Model;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace InventorySystem.ViewModel
 {
-    public class SpreadSheetViewModel
+    public class SpreadSheetViewModel : INotifyPropertyChanged
     {
-        public string ItemName { get; set; }
-        public List<DetailItem> SelectedItemDetails { get; set; }
+        private readonly IDatabaseService _service;
 
-        // Parameterless Constructor
-        public SpreadSheetViewModel()
+        public ObservableCollection<RamData> RamDatas { get; set; }
+        public List<DetailItem> ItemDetails { get; set; }
+
+        private RamData _selectedItem;
+        public RamData SelectedItem
         {
-            ItemName = "Sample DDR5 Memory";
-            // This is what the Visual Studio Designer will "see"
-            SelectedItemDetails = new List<DetailItem>
+            get => _selectedItem;
+            set
             {
-                new DetailItem { Label = "Name", Value = "Sample DDR5 Memory" },
-                new DetailItem { Label = "Brand", Value = "Corsair" },
-                new DetailItem { Label = "Type", Value = "DDR5" },
-                new DetailItem { Label = "Speed", Value = "6000MT/s" },
-                new DetailItem { Label = "Module", Value = "2 x 16GB" },
-                new DetailItem { Label = "Total Capacity", Value = "32" },
-                new DetailItem { Label = "First Word Latency", Value = "12" },
-                new DetailItem { Label = "CAS Latency", Value = "36" },
-                new DetailItem { Label = "Color", Value = "Black" },
-                new DetailItem { Label = "Price", Value = "$273.99" },
-                new DetailItem { Label = "Price Per GB", Value = "8.562" },
-                new DetailItem { Label = "Review Count", Value = "45" },
-                new DetailItem { Label = "Rating", Value = "4.5" },
-            };
+                _selectedItem = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _itemName;
+        public string ItemName
+        {
+            get => _itemName;
+            set
+            {
+                _itemName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public SpreadSheetViewModel(IDatabaseService service)
+        {
+            _service = service;
+
+            RamDatas = new ObservableCollection<RamData>();
+            LoadData();
+        }
+
+        private void LoadData()
+        {
+            var datas = _service.GetRamDatas();
+
+            foreach (var data in datas)
+            {
+                RamDatas.Add(data);
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 }

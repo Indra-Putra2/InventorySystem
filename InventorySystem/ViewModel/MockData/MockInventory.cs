@@ -5,13 +5,13 @@ namespace InventorySystem.ViewModel.MockData
     public class MockInventory
     {
         public string ItemName { get; set; } = "Sample DDR5 Memory";
-        public List<DetailItem> SelectedItemDetails { get; set; }
+        public List<DetailItem> ItemDetails { get; set; }
 
         // Parameterless Constructor
         public MockInventory()
         {
             // This is what the Visual Studio Designer will "see"
-            SelectedItemDetails = new List<DetailItem>
+            ItemDetails = new List<DetailItem>
             {
                 new DetailItem { Label = "Brand", Value = "Corsair" },
                 new DetailItem { Label = "Type", Value = "DDR5" },

@@ -15,7 +15,7 @@
             <ColumnDefinition Width="0.3*"/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid x:Name="RamData" Grid.Column="0" IsReadOnly="True" AutoGenerateColumns="False" >
+        <DataGrid x:Name="RamData" ItemsSource="{Binding RamDatas}" SelectedItem="{Binding SelectedItem}" Grid.Column="0" IsReadOnly="True" AutoGenerateColumns="False" >
             <DataGrid.Columns>
                 <DataGridTextColumn Width="0.35*" Header="Name" Binding="{Binding Name}"></DataGridTextColumn>
                 <DataGridTextColumn Width="0.15*" Header="Brand" Binding="{Binding Brand}"></DataGridTextColumn>
@@ -44,7 +44,7 @@
             </Grid>
             
             <StackPanel Grid.Row="1" VerticalAlignment="Top">
-                <ItemsControl ItemsSource="{Binding SelectedItemDetails}">
+                <ItemsControl ItemsSource="{Binding ItemDetails}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="3.5">

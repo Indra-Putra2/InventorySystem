@@ -1,5 +1,8 @@
-﻿using System.Configuration;
-using System.Data;
+﻿using InventorySystem.Interface;
+using InventorySystem.Services;
+using InventorySystem.View;
+using InventorySystem.ViewModel;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace InventorySystem
@@ -9,5 +12,33 @@ namespace InventorySystem
     /// </summary>
     public partial class App : Application
     {
+        private IServiceCollection services = new ServiceCollection();
+        private ServiceProvider _serviceProvider;
+
+        public App()
+        {
+            services.AddSingleton<DashboardViewModel>();
+            services.AddSingleton<ICSVService, CSVService>();
+
+            services.AddSingleton<SpreadSheetViewModel>();
+            services.AddSingleton<IDatabaseService, DatabaseService>();
+
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<MainWindow>();
+
+            _serviceProvider = services.BuildServiceProvider();
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _serviceProvider.Dispose();
+            base.OnExit(e);
+        }
     }
 }
