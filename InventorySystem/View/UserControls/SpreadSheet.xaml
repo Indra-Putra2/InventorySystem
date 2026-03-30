@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:InventorySystem.View.UserControls"
              xmlns:vm="clr-namespace:InventorySystem.ViewModel.MockData"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignHeight="500" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=vm:MockInventory, IsDesignTimeCreatable=True}">
     
     <Grid>
@@ -15,60 +15,95 @@
             <ColumnDefinition Width="0.3*"/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid x:Name="RamData" ItemsSource="{Binding RamDatas}" SelectedItem="{Binding SelectedItem}" Grid.Column="0" IsReadOnly="True" AutoGenerateColumns="False" >
+        <DataGrid x:Name="RamData" 
+              Grid.Column="0" 
+              ItemsSource="{Binding RamDatas}" 
+              SelectedItem="{Binding SelectedItem}" 
+              IsReadOnly="True"
+              AutoGenerateColumns="False" 
+              CanUserResizeColumns="True"
+              HorizontalScrollBarVisibility="Auto"
+              VerticalScrollBarVisibility="Auto">
             <DataGrid.Columns>
-                <DataGridTextColumn Width="0.35*" Header="Name" Binding="{Binding Name}"></DataGridTextColumn>
-                <DataGridTextColumn Width="0.15*" Header="Brand" Binding="{Binding Brand}"></DataGridTextColumn>
-                <DataGridTextColumn Width="0.15*" Header="Memory Type" Binding="{Binding MemoryType}"></DataGridTextColumn>
-                <DataGridTextColumn Width="0.15*" Header="Module" Binding="{Binding Module}"></DataGridTextColumn>
-                <DataGridTextColumn Width="0.2*" Header="Price" Binding="{Binding Price}"></DataGridTextColumn>
+                <DataGridTextColumn Width=".2*" Header="Name" Binding="{Binding Name}"></DataGridTextColumn>
+                <DataGridTextColumn Width="100" Header="Brand" Binding="{Binding Brand}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Memory Type" Binding="{Binding MemoryType}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Module" Binding="{Binding Module}"></DataGridTextColumn>
+                <DataGridTextColumn Width="100" Header="Price" Binding="{Binding Price}"></DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
-                
+
         <Grid Grid.Column="1" Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="0.15*"/>
                 <RowDefinition Height="0.75*"/>
                 <RowDefinition Height="0.1*"/>
             </Grid.RowDefinitions>
-            
-            <Grid Grid.Column="0">
-                <TextBlock Grid.Column="0" 
-               Text="{Binding ItemName}" 
-               FontWeight="Bold"
-               FontSize="18"
-               TextWrapping="Wrap"
-               VerticalAlignment="Center"
-               HorizontalAlignment="Center"
-               Foreground="Black"/>
+
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Viewbox>
+                    <TextBlock 
+                   Text="{Binding ItemName}" 
+                   FontWeight="Bold"
+                   TextWrapping="Wrap"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Foreground="Black"/>
+                </Viewbox>
+
+            </ScrollViewer>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel VerticalAlignment="Top">
+                    <ItemsControl ItemsSource="{Binding ItemDetails}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="3.5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock  
+                                        Text="{Binding Label}"
+                                        FontWeight="SemiBold" 
+                                        VerticalAlignment="Center" 
+                                        Foreground="Gray"/>
+
+                                    <TextBlock Grid.Column="1" 
+                                       Text="{Binding Value}" 
+                                       FontSize="12"
+                                       VerticalAlignment="Center" 
+                                       TextWrapping="Wrap"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" CornerRadius="5" Background="#E0E0E0" Margin="5">
+                    <Button Content="Insert" Background="Transparent" BorderThickness="0"/>
+                </Border>
+
+                <Border Grid.Column="1" CornerRadius="5" Background="#E0E0E0" Margin="5">
+                    <Button Content="Add" Background="Transparent" BorderThickness="0"/>
+                </Border>
+
+                <Border Grid.Column="2" CornerRadius="5" Background="#E0E0E0" Margin="5">
+                    <Button Content="Update" Background="Transparent" BorderThickness="0"/>
+                </Border>
+
+                <Border Grid.Column="3" CornerRadius="5" Background="Red" Margin="5">
+                    <Button Content="Delete" Background="Transparent" BorderThickness="0"/>
+                </Border>
             </Grid>
-            
-            <StackPanel Grid.Row="1" VerticalAlignment="Top">
-                <ItemsControl ItemsSource="{Binding ItemDetails}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Margin="3.5">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" 
-                                   Text="{Binding Label}" 
-                                   FontWeight="SemiBold" 
-                                   VerticalAlignment="Center" 
-                                   Foreground="Gray"/>
-
-                                <TextBlock Grid.Column="1" 
-                                   Text="{Binding Value}" 
-                                   VerticalAlignment="Center" 
-                                   TextWrapping="Wrap"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-            
         </Grid>
     </Grid>
 </UserControl>

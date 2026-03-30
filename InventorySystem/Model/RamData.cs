@@ -1,19 +1,42 @@
-﻿namespace InventorySystem.Model
+﻿using System.Collections;
+using System.Reflection;
+using System.Text.RegularExpressions;
+
+namespace InventorySystem.Model
 {
-    public class RamData
+    public class RamData : IEnumerable<KeyValuePair<string, object>>
     {
         public string Name { get; set; }
-        public int Brand { get; set; }
+        public int BrandID { get; set; }
+        public string Brand { get; set; }
         public string MemoryType { get; set; }
-        public double MemorySpeed { get; set; }
+        public int MemorySpeed { get; set; }
         public string Module { get; set; }
         public int TotalCapacity { get; set; }
+
+        // Use doubles for these
         public double FirstWordLatency { get; set; }
         public double CASLatency { get; set; }
-        public double PricePerGB { get; set; }
-        public double Price { get; set; }
-        public string Color { get; set; }
-        public int ReviewCount { get; set; }
         public double Rating { get; set; }
+        public int ReviewCount { get; set; }
+
+        // Use decimal for financial data
+        public decimal Price { get; set; }
+        public decimal PricePerGB { get; set; }
+
+        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        {
+            PropertyInfo[] properties = typeof(RamData).GetProperties();
+
+            foreach (var prop in properties)
+            {
+                // Format property name
+                var result = Regex.Replace(prop.Name, @"(\b[a-z]+|(?<=[a-z])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z]))", " $1").Trim();
+
+                yield return new KeyValuePair<string, object>(result, prop.GetValue(this));
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

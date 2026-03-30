@@ -1,17 +1,17 @@
-﻿using InventorySystem.Interface;
+﻿using InventorySystem.BaseClass;
+using InventorySystem.Interface;
 using InventorySystem.Model;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace InventorySystem.ViewModel
 {
-    public class SpreadSheetViewModel : INotifyPropertyChanged
+    public class SpreadSheetViewModel : ViewModelBase
     {
         private readonly IDatabaseService _service;
 
         public ObservableCollection<RamData> RamDatas { get; set; }
-        public List<DetailItem> ItemDetails { get; set; }
+
+        public string ItemName => SelectedItem?.Name ?? "Select an Item";
 
         private RamData _selectedItem;
         public RamData SelectedItem
@@ -21,17 +21,31 @@ namespace InventorySystem.ViewModel
             {
                 _selectedItem = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(ItemName));
+                OnPropertyChanged(nameof(ItemDetails));
             }
         }
-
-        private string _itemName;
-        public string ItemName
+        private List<DetailItem> _itemDetails;
+        public List<DetailItem> ItemDetails
         {
-            get => _itemName;
-            set
+            get
             {
-                _itemName = value;
-                OnPropertyChanged();
+                if (SelectedItem == null) return new List<DetailItem>();
+
+                var data = new List<DetailItem>();
+                foreach (var item in SelectedItem)
+                {
+                    var originalKey = item.Key.Replace(" ", "");
+                    if (originalKey == "Name" || originalKey == "id" || originalKey == "BrandID") continue;
+                    var detail = new DetailItem()
+                    {
+                        Label = item.Key,
+                        Value = $"{item.Value}",
+                    };
+
+                    data.Add(detail);
+                }
+                return data;
             }
         }
 
@@ -51,13 +65,6 @@ namespace InventorySystem.ViewModel
             {
                 RamDatas.Add(data);
             }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 }
