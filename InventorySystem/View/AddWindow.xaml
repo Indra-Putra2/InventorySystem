@@ -4,84 +4,54 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InventorySystem.View"
+        xmlns:UserControls="clr-namespace:InventorySystem.View.UserControls"
+        xmlns:Model="clr-namespace:InventorySystem.Model"
         mc:Ignorable="d"
         Title="AddWindow" Height="450" Width="800">
+    
+    <Window.Resources>
+
+        <DataTemplate DataType="{x:Type Model:InputTextModel}">
+            <UserControls:TextInput/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type Model:InputComboModel}">
+            <UserControls:ComboInput/>
+        </DataTemplate>
+
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="8*"/>
+            <RowDefinition Height=".15*"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height=".15*"/>
         </Grid.RowDefinitions>
-        
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Fields}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="{Binding Label}" 
-                               HorizontalAlignment="Center" 
-                               FontSize="20"/>
+        <Border Grid.Row="0" Background="LightGreen">
+            <Viewbox>
+                <TextBlock Text="Add Ram Data" FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Viewbox>
+        </Border>
 
-                            <!-- Different input types -->
-                            <ContentControl Grid.Column="1" Content="{Binding}">
-                                <ContentControl.Style>
-                                    <Style TargetType="ContentControl">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Type}" Value="Text">
-                                                <Setter Property="ContentTemplate">
-                                                    <Setter.Value>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" 
-                                                             Background="{Binding Background}" />
-                                                        </DataTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger>
-
-                                            <DataTrigger Binding="{Binding Type}" Value="Number">
-                                                <Setter Property="ContentTemplate">
-                                                    <Setter.Value>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" 
-                                                             PreviewTextInput="NumberOnly" 
-                                                             Background="{Binding Background}" />
-                                                        </DataTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger>
-
-                                            <DataTrigger Binding="{Binding Type}" Value="Combo">
-                                                <Setter Property="ContentTemplate">
-                                                    <Setter.Value>
-                                                        <DataTemplate>
-                                                            <ComboBox ItemsSource="{Binding Options}" 
-                                                              SelectedItem="{Binding Value}" />
-                                                        </DataTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger>
-
-                                        </Style.Triggers>
-                                    </Style>
-                                </ContentControl.Style>
-                            </ContentControl>
-
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding ItemInput}"/>
         </ScrollViewer>
-        
-        <Grid Grid.Row="1" Margin="5">
+
+        <Grid Grid.Row="2" Width="300" Margin="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
+            <Border Grid.Column="0" CornerRadius="5" Background="#E0E0E0" Margin="5,0,5,0">
+                <Button Content="Add" FontSize="16" Background="Transparent" BorderThickness="0" Command="{Binding AddCommand}"/>
+            </Border>
+            <Border Grid.Column="1" CornerRadius="5" Background="#E0E0E0" Margin="5,0,5,0">
+                <Button Content="Cancel" FontSize="16" Background="Transparent" BorderThickness="0" Command="{Binding CancelCommand}"/>
+            </Border>
         </Grid>
     </Grid>
 </Window>

@@ -6,5 +6,6 @@ namespace InventorySystem.Interface
     {
         void InitializeDatabase();
         List<RamData> GetRamDatas();
+        List<BrandData> GetBrandDatas();
     }
 }

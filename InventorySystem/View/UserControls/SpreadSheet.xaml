@@ -93,7 +93,7 @@
                 </Border>
 
                 <Border Grid.Column="1" CornerRadius="5" Background="#E0E0E0" Margin="5">
-                    <Button Content="Add" Background="Transparent" BorderThickness="0"/>
+                    <Button Content="Add" Background="Transparent" BorderThickness="0" Command="{Binding AddCommand}"/>
                 </Border>
 
                 <Border Grid.Column="2" CornerRadius="5" Background="#E0E0E0" Margin="5">

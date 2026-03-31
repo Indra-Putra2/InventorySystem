@@ -97,6 +97,13 @@ namespace InventorySystem.Services
             ";
             return conn.Query<RamData>(query).ToList();
         }
+        public List<BrandData> GetBrandDatas()
+        {
+            using var conn = new SQLiteConnection(_connectionString);
+            string query = @"SELECT * FROM Brand";
+            var result = conn.Query<RamData>(query);
+            return conn.Query<BrandData>(query).ToList();
+        }
         private bool IsTableEmpty(string tableName)
         {
             using var conn = new SQLiteConnection(_connectionString);
@@ -106,7 +113,7 @@ namespace InventorySystem.Services
         private void ImportBrand()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            string resourceName = "InventorySystem.brands.csv";
+            string resourceName = "InventorySystem.Resources.brands.csv";
             using Stream stream = assembly.GetManifestResourceStream(resourceName);
 
             if (stream == null)

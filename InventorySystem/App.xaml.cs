@@ -22,9 +22,10 @@ namespace InventorySystem
 
             services.AddSingleton<SpreadSheetViewModel>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
+            services.AddSingleton<IWindowFactory, WindowFactory>();
 
-            services.AddSingleton<AddViewModel>();
-            services.AddSingleton<AddWindow>();
+            services.AddTransient<AddViewModel>();
+            services.AddTransient<AddWindow>();
 
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<MainWindow>();
@@ -34,7 +35,6 @@ namespace InventorySystem
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            _serviceProvider.GetRequiredService<AddWindow>();
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
             mainWindow.Show();
         }

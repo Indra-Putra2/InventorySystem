@@ -1,6 +1,8 @@
 ﻿using InventorySystem.BaseClass;
 using InventorySystem.Interface;
 using InventorySystem.Model;
+using InventorySystem.Services;
+using InventorySystem.View;
 using System.Collections.ObjectModel;
 
 namespace InventorySystem.ViewModel
@@ -8,9 +10,10 @@ namespace InventorySystem.ViewModel
     public class SpreadSheetViewModel : ViewModelBase
     {
         private readonly IDatabaseService _service;
+        private readonly IWindowFactory _WindowFactory;
 
         public ObservableCollection<RamData> RamDatas { get; set; }
-
+        public RelayCommand AddCommand => new RelayCommand(execute => AddItem());
         public string ItemName => SelectedItem?.Name ?? "Select an Item";
 
         private RamData _selectedItem;
@@ -33,14 +36,13 @@ namespace InventorySystem.ViewModel
                 if (SelectedItem == null) return new List<DetailItem>();
 
                 var data = new List<DetailItem>();
-                foreach (var item in SelectedItem)
+                foreach (var (prop, value) in SelectedItem)
                 {
-                    var originalKey = item.Key.Replace(" ", "");
-                    if (originalKey == "Name" || originalKey == "id" || originalKey == "BrandID") continue;
+                    if (prop.Name == "Name" || prop.Name == "id" || prop.Name == "BrandID") continue;
                     var detail = new DetailItem()
                     {
-                        Label = item.Key,
-                        Value = $"{item.Value}",
+                        Label = RegexHelper.SplitName(prop.Name),
+                        Value = $"{value}",
                     };
 
                     data.Add(detail);
@@ -49,9 +51,10 @@ namespace InventorySystem.ViewModel
             }
         }
 
-        public SpreadSheetViewModel(IDatabaseService service)
+        public SpreadSheetViewModel(IDatabaseService service, IWindowFactory windowFactory)
         {
             _service = service;
+            _WindowFactory = windowFactory;
 
             RamDatas = new ObservableCollection<RamData>();
             LoadData();
@@ -65,6 +68,12 @@ namespace InventorySystem.ViewModel
             {
                 RamDatas.Add(data);
             }
+        }
+
+        private void AddItem()
+        {
+            var window = _WindowFactory.Create<AddWindow>();
+            window.ShowDialog();
         }
     }
 }

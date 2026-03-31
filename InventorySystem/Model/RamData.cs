@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace InventorySystem.Model
 {
-    public class RamData : IEnumerable<KeyValuePair<string, object>>
+    public class RamData : IEnumerable<(PropertyInfo Prop, object Value)>
     {
         public string Name { get; set; }
         public int BrandID { get; set; }
@@ -24,16 +24,13 @@ namespace InventorySystem.Model
         public decimal Price { get; set; }
         public decimal PricePerGB { get; set; }
 
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+        public IEnumerator<(PropertyInfo Prop, object Value)> GetEnumerator()
         {
-            PropertyInfo[] properties = typeof(RamData).GetProperties();
+            var properties = typeof(RamData).GetProperties();
 
             foreach (var prop in properties)
             {
-                // Format property name
-                var result = Regex.Replace(prop.Name, @"(\b[a-z]+|(?<=[a-z])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z]))", " $1").Trim();
-
-                yield return new KeyValuePair<string, object>(result, prop.GetValue(this));
+                yield return (prop, prop.GetValue(this));
             }
         }
 
