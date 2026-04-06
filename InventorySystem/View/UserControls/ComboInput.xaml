@@ -31,6 +31,7 @@
                 ItemsSource="{Binding Options}" 
                 SelectedItem="{Binding Value, Mode=TwoWay}"
                 ToolTip="{Binding ErrorMessage}"
+                ToolTipService.InitialShowDelay="100"
                 BorderThickness="0" 
                 Background="Transparent"
                 FontSize="16"/>

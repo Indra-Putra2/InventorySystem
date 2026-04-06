@@ -1,9 +1,12 @@
 ﻿using InventorySystem.BaseClass;
+using InventorySystem.Interface;
+using System.Windows.Controls;
 
 namespace InventorySystem.Model
 {
-    public class InputComboModel : ViewModelBase
+    public class InputComboModel : ViewModelBase, IInputModel
     {
+        public string Key { get; set; }
         public string Label { get; set; }
         public List<string> Options { get; set; }
 
@@ -40,8 +43,9 @@ namespace InventorySystem.Model
             }
         }
 
-        public InputComboModel(string label, List<string> options)
+        public InputComboModel(string key, string label, List<string> options)
         {
+            Key = key;
             Label = label;
             Options = options;
             Validate();

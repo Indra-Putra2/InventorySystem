@@ -1,9 +1,14 @@
 ﻿using InventorySystem.BaseClass;
 using InventorySystem.Interface;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
 namespace InventorySystem.Model
 {
-    public class InputTextModel : ViewModelBase, IInputModel
+    public class InputNumericModel : ViewModelBase, IInputModel
     {
+        public Type TargetType { get; set; }
         public string Key { get; set; }
         public string Label { get; set; }
 
@@ -41,8 +46,9 @@ namespace InventorySystem.Model
             }
         }
 
-        public InputTextModel(string key, string label)
+        public InputNumericModel(string key, string label, Type type)
         {
+            TargetType = type;
             Key = key;
             Label = label;
             Value = string.Empty;
@@ -51,16 +57,24 @@ namespace InventorySystem.Model
 
         private void Validate()
         {
-            
-            if (string.IsNullOrEmpty(Value))
+            if (string.IsNullOrWhiteSpace(Value))
             {
                 IsReady = false;
                 ErrorMessage = $"{Label} is required";
+                return;
             }
-            else
+
+            try
             {
+                // ChangeType attempts to force the string into the TargetType
+                Convert.ChangeType(Value, TargetType);
                 IsReady = true;
                 ErrorMessage = null;
+            }
+            catch (Exception)
+            {
+                IsReady = false;
+                ErrorMessage = $"Please enter a valid {TargetType.Name}";
             }
         }
     }

@@ -26,11 +26,11 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-
+            
             <TextBox Grid.Column="1"
-             Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-             FontSize="16"
-             ToolTip="{Binding ErrorMessage}"/>
+                 Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 FontSize="16"
+                 ToolTip="{Binding ErrorMessage}" ToolTipService.InitialShowDelay="100"/>
         </Border>
     </Grid>
 </UserControl>

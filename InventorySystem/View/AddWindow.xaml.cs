@@ -8,10 +8,12 @@ namespace InventorySystem.View
     /// </summary>
     public partial class AddWindow : Window
     {
-        public AddWindow(AddViewModel addViewModel)
+        public AddWindow(AddViewModel vm)
         {
             InitializeComponent();
-            DataContext = addViewModel;
+            DataContext = vm;
+
+            vm.RequestClose += () => this.Close();
         }
     }
 }

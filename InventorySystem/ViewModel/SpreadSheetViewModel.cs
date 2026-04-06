@@ -36,15 +36,15 @@ namespace InventorySystem.ViewModel
                 if (SelectedItem == null) return new List<DetailItem>();
 
                 var data = new List<DetailItem>();
-                foreach (var (prop, value) in SelectedItem)
+                foreach (var (prop, value) in SelectedItem.GetProperties())
                 {
+                    var detail = new DetailItem();
                     if (prop.Name == "Name" || prop.Name == "id" || prop.Name == "BrandID") continue;
-                    var detail = new DetailItem()
+                    else
                     {
-                        Label = RegexHelper.SplitName(prop.Name),
-                        Value = $"{value}",
-                    };
-
+                        detail.Label = RegexHelper.SplitName(prop.Name);
+                        detail.Value = $"{value}";
+                    }
                     data.Add(detail);
                 }
                 return data;
@@ -54,16 +54,27 @@ namespace InventorySystem.ViewModel
         public SpreadSheetViewModel(IDatabaseService service, IWindowFactory windowFactory)
         {
             _service = service;
+            _service.OnDataChanged += HandleDataChanged;
             _WindowFactory = windowFactory;
 
             RamDatas = new ObservableCollection<RamData>();
             LoadData();
         }
 
+        private void HandleDataChanged(string obj)
+        {
+            LoadData();
+
+            OnPropertyChanged(nameof(RamDatas));
+            OnPropertyChanged(nameof(SelectedItem));
+            OnPropertyChanged(nameof(ItemName));
+            OnPropertyChanged(nameof(ItemDetails));
+        }
+
         private void LoadData()
         {
             var datas = _service.GetRamDatas();
-
+            RamDatas.Clear();
             foreach (var data in datas)
             {
                 RamDatas.Add(data);

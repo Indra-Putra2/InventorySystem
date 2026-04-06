@@ -11,7 +11,7 @@ namespace InventorySystem.Services
         {
             using var reader = new StreamReader(path);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            return csv.GetRecords<dynamic>();
+            return csv.GetRecords<dynamic>().ToList();
         }
 
         public IEnumerable<dynamic> CSVReader(StreamReader reader)

@@ -19,6 +19,10 @@
             <UserControls:ComboInput/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type Model:InputNumericModel}">
+            <UserControls:TextInput/>
+        </DataTemplate>
+
     </Window.Resources>
 
     <Grid>

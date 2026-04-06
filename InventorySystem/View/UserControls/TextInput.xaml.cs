@@ -11,5 +11,10 @@ namespace InventorySystem.View.UserControls
         {
             InitializeComponent();
         }
+
+        private void TextBox_GotFocus(object sender, System.Windows.RoutedEventArgs e)
+        {
+
+        }
     }
 }
