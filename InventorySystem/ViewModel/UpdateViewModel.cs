@@ -1,48 +1,42 @@
-﻿using InventorySystem.BaseClass;
-using InventorySystem.Interface;
+﻿using InventorySystem.Interface;
 using InventorySystem.Model;
 using InventorySystem.Services;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 
 namespace InventorySystem.ViewModel
 {
-    public class AddViewModel : ViewModelBase
+    public class UpdateViewModel
     {
-        public RelayCommand AddCommand => new RelayCommand(execute => Add(), canExecute => UpdateStatus());
+        private IDatabaseService _databaseService;
+        private ISelectionService _selection;
+        public RelayCommand UpdateCommand => new RelayCommand(execute => Update(), canExecute => CanUpdate());
         public RelayCommand CancelCommand => new RelayCommand(execute => Cancel());
         public Action? RequestClose;
-        private IDatabaseService _databaseService;
-
         public ObservableCollection<object> ItemInput { get; set; }
-        private RamData RamData = new();
-        public AddViewModel(IDatabaseService databaseService)
+        public UpdateViewModel(ISelectionService selectionService, IDatabaseService databaseService)
         {
             _databaseService = databaseService;
+            _selection = selectionService;
             ItemInput = new();
 
-            foreach (var (prop, value) in RamData.GetProperties())
+            foreach (var (prop, value) in _selection.SelectedRam.GetProperties())
             {
-                if (prop.Name == "Brand") continue;
+                if (prop.Name == "Brand" || prop.Name == "id") continue;
 
                 string label = RegexHelper.SplitName(prop.Name);
 
-                object input = CreateInput(prop, label);
-
-                if (input is INotifyPropertyChanged npc)
-                {
-                    npc.PropertyChanged += Child_PropertyChanged;
-                }
+                object input = CreateInput(prop, label, value);
 
                 ItemInput.Add(input);
             }
         }
-
-        private object CreateInput(PropertyInfo prop, string label)
+        private object CreateInput(PropertyInfo prop, string label, object value)
         {
             var type = prop.PropertyType;
+            string newVal = value?.ToString() ?? "";
+            int id = int.TryParse(value?.ToString(), out var result) ? result : 0;
 
             if (prop.Name == "BrandID")
             {
@@ -52,39 +46,26 @@ namespace InventorySystem.ViewModel
                     .Select(b => b.Key)
                     .ToList();
 
-                return new InputComboModel(prop.Name, label, brands);
+                var brandName = _databaseService.BrandIDtoName(id);
+                return new InputComboModel(prop.Name, label, brands, brandName);
             }
 
             if (type == typeof(string))
             {
-                return new InputTextModel(prop.Name, label);
+                return new InputTextModel(prop.Name, label, newVal);
             }
 
             if (type == typeof(int) || type == typeof(double) || type == typeof(decimal))
             {
-                return new InputNumericModel(prop.Name, label, type);
+                return new InputNumericModel(prop.Name, label, type, newVal);
             }
-
-            return new InputTextModel(prop.Name, label); // fallback
+            return new InputTextModel(prop.Name, label, newVal); // fallback
         }
 
-        public bool UpdateStatus()
-        {
-            return ItemInput.Cast<IInputModel>().All(i => i.IsReady);
-        }
-
-        private void Child_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(IInputModel.IsReady))
-            {
-                UpdateStatus();
-            }
-        }
-
-        private void Add()
+        private void Update()
         {
             RamData ram = new RamData();
-
+            ram.id = _selection.SelectedRam.id;
             try
             {
                 foreach (IInputModel item in ItemInput)
@@ -99,16 +80,21 @@ namespace InventorySystem.ViewModel
                         ram.RamBuilder(item.Key, item.Value);
                     }
                 }
-                _databaseService.InsertCollectionToProduct(ram);
-
+                _databaseService.UpdateFromTable("Product", "id = @id", ram);
                 RequestClose?.Invoke();
             }
-            catch (Exception ex)
+            catch (InvalidFilterCriteriaException ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        public void Cancel() => RequestClose?.Invoke();
+        private bool CanUpdate()
+        {
+            return ItemInput.Cast<IInputModel>().All(i => i.IsReady);
+        }
+        private void Cancel()
+        {
+            RequestClose?.Invoke();
+        }
     }
 }

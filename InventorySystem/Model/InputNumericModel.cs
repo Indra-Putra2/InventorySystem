@@ -8,7 +8,7 @@ namespace InventorySystem.Model
 {
     public class InputNumericModel : ViewModelBase, IInputModel
     {
-        public Type TargetType { get; set; }
+        private Type TargetType { get; set; }
         public string Key { get; set; }
         public string Label { get; set; }
 
@@ -46,12 +46,12 @@ namespace InventorySystem.Model
             }
         }
 
-        public InputNumericModel(string key, string label, Type type)
+        public InputNumericModel(string key, string label, Type type, string value = "")
         {
             TargetType = type;
             Key = key;
             Label = label;
-            Value = string.Empty;
+            Value = value;
             Validate();
         }
 
@@ -71,7 +71,7 @@ namespace InventorySystem.Model
                 IsReady = true;
                 ErrorMessage = null;
             }
-            catch (Exception)
+            catch
             {
                 IsReady = false;
                 ErrorMessage = $"Please enter a valid {TargetType.Name}";

@@ -14,7 +14,10 @@ namespace InventorySystem.Interface
         void InsertValuesIntoColumn(string tableName, string columnName, string item);
         void InsertCollectionToProduct(IEnumerable<RamData> values);
         void InsertCollectionToProduct(RamData values);
-        int? BrandNameToID(string name);
-        string? BrandIDtoName(int id);
+        public void UpdateFromTable(string tableName, string condition, RamData ramData);
+        public void UpdateFromTable(string tableName, string condition, object value);
+        public void DeleteFromTable(string tableName, string condition, object value);
+        int BrandNameToID(string name);
+        public string BrandIDtoName(int id);
     }
 }

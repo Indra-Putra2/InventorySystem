@@ -6,5 +6,6 @@ namespace InventorySystem.Interface
     {
         IEnumerable<dynamic> CSVReader(string path);
         IEnumerable<dynamic> CSVReader(StreamReader reader);
+        void CSVImport(string path);
     }
 }

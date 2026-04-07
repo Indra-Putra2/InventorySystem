@@ -2,11 +2,8 @@
 using InventorySystem.Interface;
 using InventorySystem.Model;
 using System.Data.SQLite;
-using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Reflection;
-using System.Security.Cryptography.Pkcs;
 using System.Windows;
 
 namespace InventorySystem.Services
@@ -15,11 +12,13 @@ namespace InventorySystem.Services
     {
         private string _dbPath;
         private string _connectionString;
+        private ISqlQueryBuilder _queryBuilder;
+        private IStringService _stringService;
         private ICSVService _csvService;
         private static readonly Dictionary<string, string> _allowedTables = new()
         {
             { "brands", "Brands" },
-            { "products", "Products" }
+            { "product", "Product" }
         };
         private static readonly Dictionary<string, string> _allowedColumns = new()
         {
@@ -38,13 +37,16 @@ namespace InventorySystem.Services
             { "pricepergb", "PricePerGB" },
             { "id", "Id" }
         };
+        private readonly string appFolder;
         private static Dictionary<string, int> _brandCache = new(StringComparer.OrdinalIgnoreCase);
         public event Action<string> OnDataChanged;
-        public DatabaseService(ICSVService CSVService)
+        public DatabaseService(ICSVService CSVService, ISqlQueryBuilder sqlQueryBuilder, IStringService stringService)
         {
+            _queryBuilder = sqlQueryBuilder;
+            _stringService = stringService;
             _csvService = CSVService;
             string folder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string appFolder = Path.Combine(folder, "InventorySystem");
+            appFolder = Path.Combine(folder, "InventorySystem");
 
             if (!Directory.Exists(appFolder))
             {
@@ -145,15 +147,8 @@ namespace InventorySystem.Services
         }
         public void InsertValuesIntoColumn(string tableName, string columnName, IEnumerable<string> items)
         {
-            if (!_allowedTables.TryGetValue(tableName.ToLower(), out var safeTable))
-            {
-                throw new InvalidFilterCriteriaException("Invalid Table");
-            }
-
-            if (!_allowedColumns.TryGetValue(columnName.ToLower(), out var safeColumn))
-            {
-                throw new InvalidFilterCriteriaException("Invalid Column");
-            }
+            var safeTable = TableValidator(tableName);
+            var safeColumn = ColumnValidator(columnName);
 
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
@@ -162,7 +157,8 @@ namespace InventorySystem.Services
 
             try
             {
-                string sql = $"INSERT OR IGNORE INTO {safeTable} ({safeColumn}) VALUES (@Value)";
+
+                string sql = _queryBuilder.BuildInsertToColumn(safeTable, safeColumn);
 
                 conn.Execute(sql, items.Select(i => new { Value = i }), transaction);
 
@@ -188,62 +184,130 @@ namespace InventorySystem.Services
 
             using var transaction = conn.BeginTransaction();
 
-            try
+            string sql = _queryBuilder.BuildInsert<RamData>("Product", "id", "Brand");
+
+            var failedItems = new List<string>();
+
+            foreach (var item in values)
             {
-                string sql = @"
-                INSERT OR IGNORE INTO Product
-                (Name, BrandID, MemoryType, MemorySpeed, Module, TotalCapacity, 
-                 FirstWordLatency, CASLatency, PricePerGB, Price, Color, ReviewCount, Rating)
-                VALUES
-                (@Name, @BrandID, @MemoryType, @MemorySpeed, @Module, @TotalCapacity,
-                 @FirstWordLatency, @CASLatency, @PricePerGB, @Price, @Color, @ReviewCount, @Rating)";
-
-                foreach (var item in values)
+                try
                 {
-                    try
-                    {
-                        conn.Execute(sql, item, transaction);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(
-                            $"Failed to insert product:\n" +
-                            $"Name: {item.Name}, BrandID: {item.BrandID}, Price: {item.Price}\n" +
-                            $"Reason: {ex.Message}",
-                            ex
-                        );
-                    }
+                    conn.Execute(sql, item, transaction);
                 }
-
-                transaction.Commit();
-
-                OnDataChanged?.Invoke("product");
+                catch (Exception ex)
+                {
+                    failedItems.Add(
+                        $"FAILED -> {_stringService.ObjectToString(item)} | ERROR -> {ex.Message}"
+                    );
+                }
             }
-            catch
+
+            if (failedItems.Any())
             {
                 transaction.Rollback();
-                throw;
+                throw new InvalidOperationException($"One or more items failed to insert. See error log in {appFolder}.");
             }
+
+            transaction.Commit();
         }
         public void InsertCollectionToProduct(RamData item)
         {
             InsertCollectionToProduct([item]);
         }
 
-        public int? BrandNameToID(string name)
+        public void DeleteFromTable(string tableName, string condition, object value)
         {
-            if (string.IsNullOrWhiteSpace(name)) return null;
+            var safeTable = TableValidator(tableName);
+            using var conn = new SQLiteConnection(_connectionString);
+            conn.Open();
+
+            string sql = _queryBuilder.BuildDelete(safeTable, condition);
+
+            using var transaction = conn.BeginTransaction();
+            try
+            {
+                conn.Execute(sql, value, transaction);
+
+            }
+            catch (Exception e)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException($"Can't Delete item where {condition} from {tableName}\n Reason {e.Message}");
+            }
+            transaction.Commit();
+            OnDataChanged?.Invoke(tableName);
+        }
+        public void UpdateFromTable(string tableName, string condition, RamData ramData)
+        {
+            var safeTable = TableValidator(tableName);
+
+            using var conn = new SQLiteConnection(_connectionString);
+            conn.Open();
+
+            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id","Brand");
+
+            using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                var affected = conn.Execute(sql, ramData, transaction);
+                Console.WriteLine($"Rows affected: {affected}");
+            }
+            catch(Exception e)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException($"Cannot Update {safeTable} with condition {condition} \n Reason {e.Message}");
+            }
+
+            transaction.Commit();
+            OnDataChanged?.Invoke(tableName);
+        }
+        public void UpdateFromTable(string tableName, string condition, object value)
+        {
+            var safeTable = TableValidator(tableName);
+
+            using var conn = new SQLiteConnection(_connectionString);
+            conn.Open();
+
+            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id", "Brand");
+
+            using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                conn.Execute(sql, value, transaction);
+            }
+            catch (Exception e)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException($"Cannot Update {safeTable} with condition {condition} \n Reason {e.Message}");
+            }
+
+            transaction.Commit();
+            OnDataChanged?.Invoke(tableName);
+        }
+        public int BrandNameToID(string name)
+        {
+            // Return 0 if the string is empty or whitespace
+            if (string.IsNullOrWhiteSpace(name)) return 0;
 
             name = name.Trim();
 
+            // TryGetValue returns false if not found, so we return 0 as the fallback
             if (_brandCache.TryGetValue(name, out var id))
                 return id;
 
-            return null;
+            return -1;
         }
-        public string? BrandIDtoName(int id)
+        public string BrandIDtoName(int id)
         {
-            return _brandCache.FirstOrDefault(x => x.Value == id).Key;
+            var name = _brandCache
+                .Where(p => p.Value == id)
+                .Select(p => p.Key)
+                .FirstOrDefault();
+
+            // If FirstOrDefault returns null (id not found), return a friendly string
+            return name ?? "Unknown Brand";
         }
         private bool IsTableEmpty(string tableName)
         {
@@ -272,7 +336,6 @@ namespace InventorySystem.Services
         }
         private void UpdateBrandData()
         {
-            Debug.WriteLine("Updating Brand Data");
             using var conn = new SQLiteConnection(_connectionString);
             var data = conn.Query<BrandData>("SELECT id, Name FROM Brand");
 
@@ -286,6 +349,22 @@ namespace InventorySystem.Services
         private void HandleDatabaseChanged(string table)
         {
             if (table == "brand") { UpdateBrandData(); }
+        }
+        private string TableValidator(string tableName)
+        {
+            if (!_allowedTables.TryGetValue(tableName.ToLower(), out var safeTable))
+            {
+                throw new InvalidFilterCriteriaException("Invalid Table");
+            }
+            return safeTable;
+        }
+        private string ColumnValidator(string columnName)
+        {
+            if (!_allowedColumns.TryGetValue(columnName.ToLower(), out var safeColumn))
+            {
+                throw new InvalidFilterCriteriaException("Invalid Column");
+            }
+            return safeColumn;
         }
     }
 }

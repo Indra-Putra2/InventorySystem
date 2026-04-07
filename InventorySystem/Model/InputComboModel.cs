@@ -43,11 +43,12 @@ namespace InventorySystem.Model
             }
         }
 
-        public InputComboModel(string key, string label, List<string> options)
+        public InputComboModel(string key, string label, List<string> options, string value = "")
         {
             Key = key;
             Label = label;
             Options = options;
+            Value = value;
             Validate();
         }
 

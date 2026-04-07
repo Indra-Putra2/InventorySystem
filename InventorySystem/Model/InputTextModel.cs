@@ -41,11 +41,11 @@ namespace InventorySystem.Model
             }
         }
 
-        public InputTextModel(string key, string label)
+        public InputTextModel(string key, string label, string value = "")
         {
             Key = key;
             Label = label;
-            Value = string.Empty;
+            Value = value;
             Validate();
         }
 

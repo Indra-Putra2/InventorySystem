@@ -21,11 +21,17 @@ namespace InventorySystem
             services.AddSingleton<ICSVService, CSVService>();
 
             services.AddSingleton<SpreadSheetViewModel>();
+            services.AddSingleton<ISqlQueryBuilder , SqlQueryBuilder>();
+            services.AddSingleton<ISelectionService, SelectionService>();
+            services.AddSingleton<IStringService, StringService>();
+            services.AddSingleton<ISelectionService, SelectionService>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IWindowFactory, WindowFactory>();
 
             services.AddTransient<AddViewModel>();
             services.AddTransient<AddWindow>();
+            services.AddTransient<UpdateViewModel>();
+            services.AddTransient<UpdateWindow>();
 
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<MainWindow>();
