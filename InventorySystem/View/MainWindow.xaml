@@ -4,17 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InventorySystem.View"
-        xmlns:UserControls="clr-namespace:InventorySystem.View.UserControls"
+        xmlns:UserControls="clr-namespace:InventorySystem.View.UserControls.MainWindow"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <TabControl>
             <TabItem Header="Inventory" DataContext="{Binding SpreadSheetVM}">
-                <UserControls:SpreadSheet/>
+                <UserControls:SpreadSheetUC/>
             </TabItem>
 
             <TabItem Header="Dashboard" DataContext="{Binding DashboardVM}">
-                <UserControls:DashBoard/>
+                <UserControls:DashboardUC/>
             </TabItem>
         </TabControl>
     </Grid>

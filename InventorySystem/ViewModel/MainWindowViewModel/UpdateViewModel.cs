@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Windows;
 
-namespace InventorySystem.ViewModel
+namespace InventorySystem.ViewModel.MainWindowViewModel
 {
     public class UpdateViewModel
     {

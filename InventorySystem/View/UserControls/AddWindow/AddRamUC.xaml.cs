@@ -1,14 +1,14 @@
 ﻿using InventorySystem.ViewModel;
 using System.Windows.Controls;
 
-namespace InventorySystem.View.UserControls
+namespace InventorySystem.View.UserControls.AddWindow
 {
     /// <summary>
-    /// Interaction logic for SpreadSheet.xaml
+    /// Interaction logic for AddRamUC.xaml
     /// </summary>
-    public partial class SpreadSheet : UserControl
+    public partial class AddRamUC : UserControl
     {
-        public SpreadSheet()
+        public AddRamUC()
         {
             InitializeComponent();
         }

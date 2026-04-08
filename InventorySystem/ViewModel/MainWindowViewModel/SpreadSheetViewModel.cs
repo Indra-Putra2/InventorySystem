@@ -7,7 +7,7 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Windows;
 
-namespace InventorySystem.ViewModel
+namespace InventorySystem.ViewModel.MainWindowViewModel
 {
     public class SpreadSheetViewModel : ViewModelBase
     {
@@ -69,10 +69,9 @@ namespace InventorySystem.ViewModel
             _WindowFactory = windowFactory;
 
             RamDatas = new ObservableCollection<RamData>();
-            LoadData();
         }
-
-        private void HandleDataChanged(string obj)
+        public void Initialize() => LoadData();
+        private void HandleDataChanged(string obj, int affected)
         {
             LoadData();
 
@@ -105,7 +104,19 @@ namespace InventorySystem.ViewModel
             if (result == true)
             {
                 string filePath = dialog.FileName;
-                _csvService.CSVImport(filePath);
+                var items = _csvService.CSVImport(filePath);
+                try
+                {
+                    foreach (var item in items)
+                    {
+                        item.BrandID = _databaseService.BrandNameToID(item.Brand);
+                    }
+                    _databaseService.InsertCollectionToProduct(items);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message,"Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void AddItem()

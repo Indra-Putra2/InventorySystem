@@ -1,13 +1,13 @@
 ﻿using System.Windows.Controls;
 
-namespace InventorySystem.View.UserControls
+namespace InventorySystem.View.UserControls.MainWindow
 {
     /// <summary>
     /// Interaction logic for DashBoard.xaml
     /// </summary>
-    public partial class DashBoard : UserControl
+    public partial class DashboardUC : UserControl
     {
-        public DashBoard()
+        public DashboardUC()
         {
             InitializeComponent();
         }

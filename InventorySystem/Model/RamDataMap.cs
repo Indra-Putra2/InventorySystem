@@ -1,4 +1,6 @@
 ﻿using CsvHelper.Configuration;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace InventorySystem.Model
 {
@@ -16,10 +18,13 @@ namespace InventorySystem.Model
             Map(m => m.CASLatency).Name("CAS Latency");
             Map(m => m.Price).Name("Price");
             Map(m => m.PricePerGB).Name("Price Per GB");
-            Map(m => m.Color).Name("Color");
+            Map(m => m.Color).Convert(row =>
+            {
+                string raw = row.Row.GetField("Color") ?? "";
+                return Regex.Replace(raw, @"[\[\]'\s+]", "");
+            });
             Map(m => m.Rating).Name("Rating");
             Map(m => m.ReviewCount).Name("Review Count");
-
 
             // optional / missing fields
             Map(m => m.BrandID).Ignore();

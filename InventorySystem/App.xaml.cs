@@ -1,7 +1,8 @@
 ﻿using InventorySystem.Interface;
 using InventorySystem.Services;
 using InventorySystem.View;
-using InventorySystem.ViewModel;
+using InventorySystem.ViewModel.AddWindowViewModel;
+using InventorySystem.ViewModel.MainWindowViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
@@ -21,15 +22,17 @@ namespace InventorySystem
             services.AddSingleton<ICSVService, CSVService>();
 
             services.AddSingleton<SpreadSheetViewModel>();
-            services.AddSingleton<ISqlQueryBuilder , SqlQueryBuilder>();
+            services.AddSingleton<ISqlQueryBuilder, SqlQueryBuilder>();
             services.AddSingleton<ISelectionService, SelectionService>();
             services.AddSingleton<IStringService, StringService>();
             services.AddSingleton<ISelectionService, SelectionService>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IWindowFactory, WindowFactory>();
 
-            services.AddTransient<AddViewModel>();
+            services.AddTransient<AddRamViewModel>();
             services.AddTransient<AddWindow>();
+            services.AddTransient<AddViewModel>();
+            services.AddTransient<AddRamViewModel>();
             services.AddTransient<UpdateViewModel>();
             services.AddTransient<UpdateWindow>();
 

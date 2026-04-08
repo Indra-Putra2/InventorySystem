@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using InventorySystem.Model;
+using System.IO;
 
 namespace InventorySystem.Interface
 {
@@ -6,6 +7,6 @@ namespace InventorySystem.Interface
     {
         IEnumerable<dynamic> CSVReader(string path);
         IEnumerable<dynamic> CSVReader(StreamReader reader);
-        void CSVImport(string path);
+        List<RamData> CSVImport(string path);
     }
 }

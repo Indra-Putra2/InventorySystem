@@ -1,6 +1,6 @@
 ﻿using InventorySystem.Interface;
 
-namespace InventorySystem.ViewModel
+namespace InventorySystem.ViewModel.MainWindowViewModel
 {
     public class MainViewModel
     {
@@ -13,8 +13,10 @@ namespace InventorySystem.ViewModel
             _service = service;
             SpreadSheetVM = spreadSheet;
             DashboardVM = dashboard;
-
-            _service.InitializeDatabase();
+            if (_service.InitializeDatabase())
+            {
+                spreadSheet.Initialize();
+            }
         }
     }
 }

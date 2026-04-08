@@ -11,7 +11,7 @@ namespace InventorySystem.Services
             return string.Join(", ", props.Select(p =>
             {
                 var value = p.GetValue(obj) ?? "NULL";
-                return $"{p.Name}: {value} type:{p.PropertyType}";
+                return $"{p.Name}: {value} type:{p.PropertyType}\n";
             }));
         }
     }

@@ -4,6 +4,7 @@ using InventorySystem.Model;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Windows.Controls.Primitives;
 
 namespace InventorySystem.Services
 {
@@ -22,18 +23,18 @@ namespace InventorySystem.Services
             return csv.GetRecords<dynamic>();
         }
 
-        public void CSVImport(string path)
+        public List<RamData> CSVImport(string path)
         {
             using var reader = new StreamReader(path);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             csv.Context.RegisterClassMap<RamDataMap>();
-            var items = csv.GetRecords<RamData>().ToList();
-
+            var items = csv.GetRecords<RamData>().ToList() ?? new List<RamData>();
             Debug.WriteLine($"Count: {items.Count}");
             foreach (var item in items.Take(10))
             {
-                Debug.WriteLine($"{item.Brand} - {item.Name}");
+                Debug.WriteLine($"{item.Brand} - {item.Name} - {item.Color}");
             }
+            return items;
         }
     }
 }

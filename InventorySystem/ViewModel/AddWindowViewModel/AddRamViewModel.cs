@@ -7,9 +7,9 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 
-namespace InventorySystem.ViewModel
+namespace InventorySystem.ViewModel.AddWindowViewModel
 {
-    public class AddViewModel : ViewModelBase
+    public class AddRamViewModel : ViewModelBase
     {
         public RelayCommand AddCommand => new RelayCommand(execute => Add(), canExecute => UpdateStatus());
         public RelayCommand CancelCommand => new RelayCommand(execute => Cancel());
@@ -18,14 +18,14 @@ namespace InventorySystem.ViewModel
 
         public ObservableCollection<object> ItemInput { get; set; }
         private RamData RamData = new();
-        public AddViewModel(IDatabaseService databaseService)
+        public AddRamViewModel(IDatabaseService databaseService)
         {
             _databaseService = databaseService;
             ItemInput = new();
 
             foreach (var (prop, value) in RamData.GetProperties())
             {
-                if (prop.Name == "Brand") continue;
+                if (prop.Name == "Brand" || prop.Name == "id") continue;
 
                 string label = RegexHelper.SplitName(prop.Name);
 

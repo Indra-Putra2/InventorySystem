@@ -6,8 +6,8 @@ namespace InventorySystem.Interface
 {
     public interface IDatabaseService
     {
-        event Action<string> OnDataChanged;
-        void InitializeDatabase();
+        event Action<string, int> OnDataChanged;
+        bool InitializeDatabase();
         List<RamData> GetRamDatas();
         Dictionary<string, int> GetBrandDatas();
         void InsertValuesIntoColumn(string tableName, string columnName, IEnumerable<string> items);

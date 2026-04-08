@@ -4,58 +4,18 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InventorySystem.View"
-        xmlns:UserControls="clr-namespace:InventorySystem.View.UserControls"
-        xmlns:Model="clr-namespace:InventorySystem.Model"
+        xmlns:AddWindowUC="clr-namespace:InventorySystem.View.UserControls.AddWindow"
         mc:Ignorable="d"
         Title="AddWindow" Height="450" Width="800">
-    
-    <Window.Resources>
-
-        <DataTemplate DataType="{x:Type Model:InputTextModel}">
-            <UserControls:TextInput/>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type Model:InputComboModel}">
-            <UserControls:ComboInput/>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type Model:InputNumericModel}">
-            <UserControls:TextInput/>
-        </DataTemplate>
-
-    </Window.Resources>
-
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height=".15*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height=".15*"/>
-        </Grid.RowDefinitions>
-
-        <Border Grid.Row="0" Background="LightGreen">
-            <Viewbox>
-                <TextBlock Text="Add Ram Data" FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-            </Viewbox>
-        </Border>
-
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding ItemInput}"/>
-        </ScrollViewer>
-
-        <Grid Grid.Row="2" Width="300" Margin="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" CornerRadius="5" Background="#E0E0E0" Margin="5,0,5,0">
-                <Button Content="Add" FontSize="16" Background="Transparent" BorderThickness="0" Command="{Binding AddCommand}"/>
-            </Border>
-            <Border Grid.Column="1" CornerRadius="5" Background="#E0E0E0" Margin="5,0,5,0">
-                <Button Content="Cancel" FontSize="16" Background="Transparent" BorderThickness="0" Command="{Binding CancelCommand}"/>
-            </Border>
-        </Grid>
+        <TabControl Grid.Row="0">
+            <TabItem Header="Ram Data" DataContext="{Binding AddRamVM}">
+                <AddWindowUC:AddRamUC/>
+            </TabItem>
+            <TabItem Header="Brand Data" DataContext="{Binding AddBrandVM}">
+                <AddWindowUC:AddBrandUC/>
+            </TabItem>
+            <TabItem Header="To Be Develop" IsEnabled="False"></TabItem>
+        </TabControl>
     </Grid>
 </Window>

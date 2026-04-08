@@ -1,4 +1,4 @@
-﻿using InventorySystem.ViewModel;
+﻿using InventorySystem.ViewModel.MainWindowViewModel;
 using System.Windows;
 
 namespace InventorySystem.View
@@ -8,12 +8,14 @@ namespace InventorySystem.View
     /// </summary>
     public partial class AddWindow : Window
     {
+
         public AddWindow(AddViewModel vm)
         {
             InitializeComponent();
+
             DataContext = vm;
 
-            vm.RequestClose += () => this.Close();
+            vm.AddRamVM.RequestClose += () => this.Close();
         }
     }
 }

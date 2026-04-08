@@ -1,4 +1,4 @@
-﻿using InventorySystem.ViewModel;
+﻿using InventorySystem.ViewModel.MainWindowViewModel;
 using System.Windows;
 
 namespace InventorySystem.View

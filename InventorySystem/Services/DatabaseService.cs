@@ -2,6 +2,7 @@
 using InventorySystem.Interface;
 using InventorySystem.Model;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -39,7 +40,7 @@ namespace InventorySystem.Services
         };
         private readonly string appFolder;
         private static Dictionary<string, int> _brandCache = new(StringComparer.OrdinalIgnoreCase);
-        public event Action<string> OnDataChanged;
+        public event Action<string, int> OnDataChanged;
         public DatabaseService(ICSVService CSVService, ISqlQueryBuilder sqlQueryBuilder, IStringService stringService)
         {
             _queryBuilder = sqlQueryBuilder;
@@ -64,7 +65,7 @@ namespace InventorySystem.Services
 
             OnDataChanged += HandleDatabaseChanged;
         }
-        public void InitializeDatabase()
+        public bool InitializeDatabase()
         {
             using (var conn = new SQLiteConnection(_connectionString))
             {
@@ -83,8 +84,7 @@ namespace InventorySystem.Services
                     id                   INTEGER    PRIMARY KEY
                                                     AUTOINCREMENT
                                                     NOT NULL,
-                    Name                 TEXT       UNIQUE
-                                                    NOT NULL,
+                    Name                 TEXT       NOT NULL,
                     BrandID              INTEGER    REFERENCES Brand (id)   ON DELETE SET NULL
                                                                             ON UPDATE CASCADE,
                     MemoryType           TEXT       NOT NULL,
@@ -130,6 +130,7 @@ namespace InventorySystem.Services
             }
 
             UpdateBrandData();
+            return true;
         }
         public List<RamData> GetRamDatas()
         {
@@ -160,11 +161,11 @@ namespace InventorySystem.Services
 
                 string sql = _queryBuilder.BuildInsertToColumn(safeTable, safeColumn);
 
-                conn.Execute(sql, items.Select(i => new { Value = i }), transaction);
+                var affected = conn.Execute(sql, items.Select(i => new { Value = i }), transaction);
 
                 transaction.Commit();
 
-                OnDataChanged?.Invoke(safeTable.ToLower());
+                OnDataChanged?.Invoke(safeTable.ToLower(), affected);
             }
             catch
             {
@@ -179,6 +180,12 @@ namespace InventorySystem.Services
 
         public void InsertCollectionToProduct(IEnumerable<RamData> values)
         {
+            foreach (RamData value in values)
+            {
+                var id = BrandIDtoName(value.BrandID);
+                if (id == "Unknown Brand") throw new InvalidOperationException($"BrandID {value.BrandID} Doesn't Exist Can't Insert!");
+            }
+
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
 
@@ -187,17 +194,18 @@ namespace InventorySystem.Services
             string sql = _queryBuilder.BuildInsert<RamData>("Product", "id", "Brand");
 
             var failedItems = new List<string>();
+            var affected = 0;
 
             foreach (var item in values)
             {
                 try
                 {
-                    conn.Execute(sql, item, transaction);
+                    affected += conn.Execute(sql, item, transaction);
                 }
                 catch (Exception ex)
                 {
                     failedItems.Add(
-                        $"FAILED -> {_stringService.ObjectToString(item)} | ERROR -> {ex.Message}"
+                        $"FAILED -> {_stringService.ObjectToString(item)}ERROR -> {ex.Message}"
                     );
                 }
             }
@@ -205,10 +213,18 @@ namespace InventorySystem.Services
             if (failedItems.Any())
             {
                 transaction.Rollback();
-                throw new InvalidOperationException($"One or more items failed to insert. See error log in {appFolder}.");
+
+                // 1. Create a safe filename (yyyyMMdd_HHmmss avoids illegal characters)
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
+                string filePath = Path.Combine(appFolder, $"DatabaseError_{timestamp}.txt");
+
+                File.WriteAllLines(filePath, failedItems);
+
+                throw new InvalidOperationException($"One or more items failed to insert. See error log at {filePath}.");
             }
 
             transaction.Commit();
+            OnDataChanged?.Invoke("Product", affected);
         }
         public void InsertCollectionToProduct(RamData item)
         {
@@ -224,10 +240,10 @@ namespace InventorySystem.Services
             string sql = _queryBuilder.BuildDelete(safeTable, condition);
 
             using var transaction = conn.BeginTransaction();
+            var affected = 0;
             try
             {
-                conn.Execute(sql, value, transaction);
-
+                affected += conn.Execute(sql, value, transaction);
             }
             catch (Exception e)
             {
@@ -235,7 +251,7 @@ namespace InventorySystem.Services
                 throw new InvalidOperationException($"Can't Delete item where {condition} from {tableName}\n Reason {e.Message}");
             }
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName);
+            OnDataChanged?.Invoke(tableName, affected);
         }
         public void UpdateFromTable(string tableName, string condition, RamData ramData)
         {
@@ -244,23 +260,22 @@ namespace InventorySystem.Services
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
 
-            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id","Brand");
+            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id", "Brand");
 
             using var transaction = conn.BeginTransaction();
-
+            var affected = 0;
             try
             {
-                var affected = conn.Execute(sql, ramData, transaction);
-                Console.WriteLine($"Rows affected: {affected}");
+                affected += conn.Execute(sql, ramData, transaction);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 transaction.Rollback();
                 throw new InvalidOperationException($"Cannot Update {safeTable} with condition {condition} \n Reason {e.Message}");
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName);
+            OnDataChanged?.Invoke(tableName, affected);
         }
         public void UpdateFromTable(string tableName, string condition, object value)
         {
@@ -272,10 +287,10 @@ namespace InventorySystem.Services
             string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id", "Brand");
 
             using var transaction = conn.BeginTransaction();
-
+            var affected = 0;
             try
             {
-                conn.Execute(sql, value, transaction);
+                affected += conn.Execute(sql, value, transaction);
             }
             catch (Exception e)
             {
@@ -284,7 +299,7 @@ namespace InventorySystem.Services
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName);
+            OnDataChanged?.Invoke(tableName, affected);
         }
         public int BrandNameToID(string name)
         {
@@ -346,8 +361,9 @@ namespace InventorySystem.Services
                 StringComparer.OrdinalIgnoreCase
             );
         }
-        private void HandleDatabaseChanged(string table)
+        private void HandleDatabaseChanged(string table, int affected)
         {
+            MessageBox.Show($"Table {table} is Changed {affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
             if (table == "brand") { UpdateBrandData(); }
         }
         private string TableValidator(string tableName)
