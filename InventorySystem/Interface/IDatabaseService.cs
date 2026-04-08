@@ -1,12 +1,10 @@
 ﻿using InventorySystem.Model;
-using System.Data.SQLite;
-using System.Reflection;
 
 namespace InventorySystem.Interface
 {
     public interface IDatabaseService
     {
-        event Action<string, int> OnDataChanged;
+        event Action<DataChangedEventArgs> OnDataChanged;
         bool InitializeDatabase();
         List<RamData> GetRamDatas();
         Dictionary<string, int> GetBrandDatas();

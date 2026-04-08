@@ -28,8 +28,8 @@
             </Border.Style>
 
             <ComboBox 
-                ItemsSource="{Binding Options}" 
-                SelectedItem="{Binding Value, Mode=TwoWay}"
+                ItemsSource="{Binding Options, UpdateSourceTrigger=PropertyChanged}" 
+                SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 ToolTip="{Binding ErrorMessage}"
                 ToolTipService.InitialShowDelay="100"
                 BorderThickness="0" 

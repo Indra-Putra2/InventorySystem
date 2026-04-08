@@ -4,7 +4,6 @@ using InventorySystem.Model;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Windows.Controls.Primitives;
 
 namespace InventorySystem.Services
 {
@@ -20,7 +19,7 @@ namespace InventorySystem.Services
         public IEnumerable<dynamic> CSVReader(StreamReader reader)
         {
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            return csv.GetRecords<dynamic>();
+            return csv.GetRecords<dynamic>().ToList();
         }
 
         public List<RamData> CSVImport(string path)

@@ -21,9 +21,10 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         public RelayCommand AddCommand => new RelayCommand(execute => AddItem());
         public RelayCommand UpdateCommand => new RelayCommand(execute => UpdateItem(), canExecute => CanUpdate());
         public RelayCommand DeleteCommand => new RelayCommand(execute => DeleteItem(), canExecute => CanDelete());
+        public RelayCommand SearchCommand => new RelayCommand(execute => Search());
 
         public string ItemName => SelectedItem?.Name ?? "Select an Item";
-
+        public string SearchValue { get; set; }
         private RamData _selectedItem;
         public RamData SelectedItem
         {
@@ -71,7 +72,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             RamDatas = new ObservableCollection<RamData>();
         }
         public void Initialize() => LoadData();
-        private void HandleDataChanged(string obj, int affected)
+        private void HandleDataChanged(DataChangedEventArgs args)
         {
             LoadData();
 
@@ -139,18 +140,22 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         {
             try
             {
-                _databaseService.DeleteFromTable("Product", "id = @id", new { id = SelectedItem.id });
+                _databaseService.DeleteFromTable("Products", "id = @id", new { id = SelectedItem.id });
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
         }
 
         private bool CanDelete()
         {
             return SelectedItem != null;
+        }
+
+        private void Search()
+        {
+            MessageBox.Show(SearchValue);
         }
     }
 }

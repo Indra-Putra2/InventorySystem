@@ -5,10 +5,12 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
     public class AddViewModel
     {
         public AddRamViewModel AddRamVM { get; set; }
-        
-        public AddViewModel(AddRamViewModel addRam)
+        public AddBrandViewModel AddBrandVM { get; set; }
+
+        public AddViewModel(AddRamViewModel addRam, AddBrandViewModel addBrand)
         {
             AddRamVM = addRam;
+            AddBrandVM = addBrand;
         }
     }
 

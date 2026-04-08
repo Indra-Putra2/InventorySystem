@@ -33,6 +33,7 @@ namespace InventorySystem
             services.AddTransient<AddWindow>();
             services.AddTransient<AddViewModel>();
             services.AddTransient<AddRamViewModel>();
+            services.AddTransient<AddBrandViewModel>();
             services.AddTransient<UpdateViewModel>();
             services.AddTransient<UpdateWindow>();
 

@@ -1,26 +1,25 @@
-﻿using InventorySystem.BaseClass;
-using InventorySystem.Interface;
+﻿using InventorySystem.Interface;
 using InventorySystem.Model;
 using InventorySystem.Services;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 
 namespace InventorySystem.ViewModel.AddWindowViewModel
 {
-    public class AddRamViewModel : ViewModelBase
+    public class AddRamViewModel
     {
-        public RelayCommand AddCommand => new RelayCommand(execute => Add(), canExecute => UpdateStatus());
-        public RelayCommand CancelCommand => new RelayCommand(execute => Cancel());
+        public RelayCommand AddCommand => new RelayCommand(execute => Add(), canExecute => CanAdd());
+        public RelayCommand CloseCommand => new RelayCommand(execute => Close());
         public Action? RequestClose;
         private IDatabaseService _databaseService;
 
-        public ObservableCollection<object> ItemInput { get; set; }
+        public List<object> ItemInput { get; set; }
         private RamData RamData = new();
         public AddRamViewModel(IDatabaseService databaseService)
         {
             _databaseService = databaseService;
+            _databaseService.OnDataChanged += HandleDatabaseChanged;
             ItemInput = new();
 
             foreach (var (prop, value) in RamData.GetProperties())
@@ -67,20 +66,17 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
 
             return new InputTextModel(prop.Name, label); // fallback
         }
-
-        public bool UpdateStatus()
-        {
-            return ItemInput.Cast<IInputModel>().All(i => i.IsReady);
-        }
-
         private void Child_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(IInputModel.IsReady))
             {
-                UpdateStatus();
+                CanAdd();
             }
         }
-
+        private bool CanAdd()
+        {
+            return ItemInput.Cast<IInputModel>().All(i => i.IsReady);
+        }
         private void Add()
         {
             RamData ram = new RamData();
@@ -108,7 +104,22 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        public void Close() => RequestClose?.Invoke();
+        private void HandleDatabaseChanged(DataChangedEventArgs args)
+        {
+            if(args.TableName == "Brands")
+            {
+                var brands = _databaseService
+                                .GetBrandDatas()
+                                .OrderBy(b => b.Key)
+                                .Select(b => b.Key)
+                                .ToList();
 
-        public void Cancel() => RequestClose?.Invoke();
+                foreach (var i in ItemInput.OfType<InputComboModel>().Where(i => i.Key == "BrandID"))
+                {
+                    i.Options = brands;
+                }
+            }
+        }
     }
 }

@@ -16,6 +16,7 @@ namespace InventorySystem.View
             DataContext = vm;
 
             vm.AddRamVM.RequestClose += () => this.Close();
+            vm.AddBrandVM.RequestClose += () => this.Close();
         }
     }
 }

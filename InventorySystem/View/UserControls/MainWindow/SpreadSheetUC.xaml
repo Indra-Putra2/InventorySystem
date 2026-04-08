@@ -35,12 +35,21 @@
 
         <Grid Grid.Column="1" Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition Height="0.05*"/>
                 <RowDefinition Height="0.15*"/>
                 <RowDefinition Height="0.75*"/>
                 <RowDefinition Height="0.1*"/>
             </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="0.3*"/>
+                </Grid.ColumnDefinitions>
 
-            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <TextBox Text="{Binding SearchValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Column="2" Content="Search" Command="{Binding SearchCommand}"/>
+            </Grid>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <Viewbox>
                     <TextBlock 
                    Text="{Binding ItemName}" 
@@ -52,7 +61,7 @@
                 </Viewbox>
 
             </ScrollViewer>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <StackPanel VerticalAlignment="Top">
                     <ItemsControl ItemsSource="{Binding ItemDetails}">
                         <ItemsControl.ItemTemplate>
@@ -81,7 +90,7 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition/>

@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using CsvHelper;
+using Dapper;
 using InventorySystem.Interface;
 using InventorySystem.Model;
 using System.Data.SQLite;
@@ -19,7 +20,7 @@ namespace InventorySystem.Services
         private static readonly Dictionary<string, string> _allowedTables = new()
         {
             { "brands", "Brands" },
-            { "product", "Product" }
+            { "products", "Products" }
         };
         private static readonly Dictionary<string, string> _allowedColumns = new()
         {
@@ -40,7 +41,7 @@ namespace InventorySystem.Services
         };
         private readonly string appFolder;
         private static Dictionary<string, int> _brandCache = new(StringComparer.OrdinalIgnoreCase);
-        public event Action<string, int> OnDataChanged;
+        public event Action<DataChangedEventArgs> OnDataChanged;
         public DatabaseService(ICSVService CSVService, ISqlQueryBuilder sqlQueryBuilder, IStringService stringService)
         {
             _queryBuilder = sqlQueryBuilder;
@@ -71,21 +72,22 @@ namespace InventorySystem.Services
             {
                 conn.Open();
 
-                string brand = @"CREATE TABLE IF NOT EXISTS Brand (
+                string brand = @"CREATE TABLE IF NOT EXISTS Brands (
                     id    INTEGER   PRIMARY KEY
                                     AUTOINCREMENT
                                     NOT NULL,
-                    Name  TEXT      UNIQUE
+                    Name  TEXT      COLLATE NOCASE
+                                    UNIQUE
                                     NOT NULL
                 )";
 
                 // Create a simple table for your Inventory items
-                string product = @"CREATE TABLE IF NOT EXISTS Product (
+                string product = @"CREATE TABLE IF NOT EXISTS Products (
                     id                   INTEGER    PRIMARY KEY
                                                     AUTOINCREMENT
                                                     NOT NULL,
                     Name                 TEXT       NOT NULL,
-                    BrandID              INTEGER    REFERENCES Brand (id)   ON DELETE SET NULL
+                    BrandID              INTEGER    REFERENCES Brands (id)   ON DELETE SET NULL
                                                                             ON UPDATE CASCADE,
                     MemoryType           TEXT       NOT NULL,
                     MemorySpeed          INTEGER    NOT NULL,
@@ -113,7 +115,7 @@ namespace InventorySystem.Services
                 }
             }
 
-            if (IsTableEmpty("Brand"))
+            if (IsTableEmpty("Brands"))
             {
                 try
                 {
@@ -136,9 +138,9 @@ namespace InventorySystem.Services
         {
             using var conn = new SQLiteConnection(_connectionString);
             string query = @"
-                SELECT Product.*, Brand.Name AS Brand
-                FROM Product
-                LEFT JOIN Brand ON Product.BrandID = Brand.id
+                SELECT Products.*, Brands.Name AS Brand
+                FROM Products
+                LEFT JOIN Brands ON Products.BrandID = Brands.id
             ";
             return conn.Query<RamData>(query).ToList();
         }
@@ -148,6 +150,17 @@ namespace InventorySystem.Services
         }
         public void InsertValuesIntoColumn(string tableName, string columnName, IEnumerable<string> items)
         {
+            if(tableName == "Brands" && !IsTableEmpty(tableName))
+            {
+                foreach(var item in items)
+                {
+                    var id = BrandNameToID(item);
+                    if(id != -1)
+                    {
+                        throw new InvalidOperationException($"Brand With the name {item} already exist");
+                    }
+                }
+            }
             var safeTable = TableValidator(tableName);
             var safeColumn = ColumnValidator(columnName);
 
@@ -165,7 +178,7 @@ namespace InventorySystem.Services
 
                 transaction.Commit();
 
-                OnDataChanged?.Invoke(safeTable.ToLower(), affected);
+                OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = columnName, Affected = affected});
             }
             catch
             {
@@ -191,10 +204,12 @@ namespace InventorySystem.Services
 
             using var transaction = conn.BeginTransaction();
 
-            string sql = _queryBuilder.BuildInsert<RamData>("Product", "id", "Brand");
+            string sql = _queryBuilder.BuildInsert<RamData>("Products", "id", "Brand");
 
             var failedItems = new List<string>();
             var affected = 0;
+            int errorCount = 0;
+            int maxErrors = 100;
 
             foreach (var item in values)
             {
@@ -204,9 +219,13 @@ namespace InventorySystem.Services
                 }
                 catch (Exception ex)
                 {
-                    failedItems.Add(
-                        $"FAILED -> {_stringService.ObjectToString(item)}ERROR -> {ex.Message}"
-                    );
+                    if (errorCount < maxErrors)
+                    {
+                        failedItems.Add(
+                            $"FAILED -> Name:{item.Name}, BrandID:{item.BrandID} ERROR -> {ex.Message}"
+                        );
+                    }
+                    errorCount++;
                 }
             }
 
@@ -224,7 +243,7 @@ namespace InventorySystem.Services
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke("Product", affected);
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = "Products", ColumnName = "*", Affected = affected});
         }
         public void InsertCollectionToProduct(RamData item)
         {
@@ -251,7 +270,7 @@ namespace InventorySystem.Services
                 throw new InvalidOperationException($"Can't Delete item where {condition} from {tableName}\n Reason {e.Message}");
             }
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName, affected);
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
         }
         public void UpdateFromTable(string tableName, string condition, RamData ramData)
         {
@@ -275,7 +294,7 @@ namespace InventorySystem.Services
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName, affected);
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
         }
         public void UpdateFromTable(string tableName, string condition, object value)
         {
@@ -299,7 +318,7 @@ namespace InventorySystem.Services
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(tableName, affected);
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
         }
         public int BrandNameToID(string name)
         {
@@ -347,24 +366,24 @@ namespace InventorySystem.Services
                                     .Where(b => !string.IsNullOrWhiteSpace(b))
                                     .ToList().OfType<string>();
 
-            InsertValuesIntoColumn("Brand", "Name", brandNames);
+            InsertValuesIntoColumn("Brands", "Name", brandNames);
         }
         private void UpdateBrandData()
         {
             using var conn = new SQLiteConnection(_connectionString);
-            var data = conn.Query<BrandData>("SELECT id, Name FROM Brand");
+            var data = conn.Query<BrandData>("SELECT id, Name FROM Brands");
 
             // Use StringComparer.OrdinalIgnoreCase so "nike" matches "Nike"
             _brandCache = data.ToDictionary(
                 b => b.Name,
-                b => b.Id,
+                b => b.id,
                 StringComparer.OrdinalIgnoreCase
             );
         }
-        private void HandleDatabaseChanged(string table, int affected)
+        private void HandleDatabaseChanged(DataChangedEventArgs args)
         {
-            MessageBox.Show($"Table {table} is Changed {affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
-            if (table == "brand") { UpdateBrandData(); }
+            MessageBox.Show($"Table {args.TableName} is Changed {args.Affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (args.TableName == "Brands") { UpdateBrandData(); }
         }
         private string TableValidator(string tableName)
         {

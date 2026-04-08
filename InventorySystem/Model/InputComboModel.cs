@@ -1,6 +1,5 @@
 ﻿using InventorySystem.BaseClass;
 using InventorySystem.Interface;
-using System.Windows.Controls;
 
 namespace InventorySystem.Model
 {
@@ -8,7 +7,18 @@ namespace InventorySystem.Model
     {
         public string Key { get; set; }
         public string Label { get; set; }
-        public List<string> Options { get; set; }
+
+        private List<string> _option;
+        public List<string> Options
+        {
+            get { return _option; }
+            set 
+            { 
+                _option = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         private string _errorMessage;
         public string ErrorMessage
