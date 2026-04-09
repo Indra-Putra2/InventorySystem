@@ -22,9 +22,9 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         public RelayCommand UpdateCommand => new RelayCommand(execute => UpdateItem(), canExecute => CanUpdate());
         public RelayCommand DeleteCommand => new RelayCommand(execute => DeleteItem(), canExecute => CanDelete());
         public RelayCommand SearchCommand => new RelayCommand(execute => Search());
-
+        public RelayCommand SettingCommand => new RelayCommand(execute => Setting());
         public string ItemName => SelectedItem?.Name ?? "Select an Item";
-        public string SearchValue { get; set; }
+        public string SearchValue { get; set; } = string.Empty;
         private RamData _selectedItem;
         public RamData SelectedItem
         {
@@ -112,11 +112,11 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                     {
                         item.BrandID = _databaseService.BrandNameToID(item.Brand);
                     }
-                    _databaseService.InsertCollectionToProduct(items);
+                    _databaseService.InsertCollectionToProduct("Products",items, "id", "Brand");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message,"Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -155,7 +155,24 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
 
         private void Search()
         {
-            MessageBox.Show(SearchValue);
+            try
+            {
+                var result = _databaseService.SearchFromTable<RamData>("Products", SearchValue);
+                RamDatas.Clear();
+                foreach (var item in result)
+                {
+                    RamDatas.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void Setting()
+        {
+            var window = _WindowFactory.Create<SettingWindow>();
+            window.ShowDialog();
         }
     }
 }

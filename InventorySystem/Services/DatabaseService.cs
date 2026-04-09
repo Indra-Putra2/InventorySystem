@@ -1,9 +1,7 @@
-﻿using CsvHelper;
-using Dapper;
+﻿using Dapper;
 using InventorySystem.Interface;
 using InventorySystem.Model;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -41,7 +39,8 @@ namespace InventorySystem.Services
         };
         private readonly string appFolder;
         private static Dictionary<string, int> _brandCache = new(StringComparer.OrdinalIgnoreCase);
-        public event Action<DataChangedEventArgs> OnDataChanged;
+        public event Action<DataChangedEventArgs>? OnDataChanged;
+        public event Action? BrandCacheUpdated;
         public DatabaseService(ICSVService CSVService, ISqlQueryBuilder sqlQueryBuilder, IStringService stringService)
         {
             _queryBuilder = sqlQueryBuilder;
@@ -150,12 +149,12 @@ namespace InventorySystem.Services
         }
         public void InsertValuesIntoColumn(string tableName, string columnName, IEnumerable<string> items)
         {
-            if(tableName == "Brands" && !IsTableEmpty(tableName))
+            if (tableName == "Brands" && !IsTableEmpty(tableName))
             {
-                foreach(var item in items)
+                foreach (var item in items)
                 {
                     var id = BrandNameToID(item);
-                    if(id != -1)
+                    if (id != -1)
                     {
                         throw new InvalidOperationException($"Brand With the name {item} already exist");
                     }
@@ -178,7 +177,7 @@ namespace InventorySystem.Services
 
                 transaction.Commit();
 
-                OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = columnName, Affected = affected});
+                OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = columnName, Affected = affected });
             }
             catch
             {
@@ -190,26 +189,17 @@ namespace InventorySystem.Services
         {
             InsertValuesIntoColumn(tableName, columnName, [item]);
         }
-
-        public void InsertCollectionToProduct(IEnumerable<RamData> values)
+        public void InsertCollection<T>(string tableName,IEnumerable<T> values, params string[] propertyIgnore)
         {
-            foreach (RamData value in values)
-            {
-                var id = BrandIDtoName(value.BrandID);
-                if (id == "Unknown Brand") throw new InvalidOperationException($"BrandID {value.BrandID} Doesn't Exist Can't Insert!");
-            }
-
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
 
             using var transaction = conn.BeginTransaction();
 
-            string sql = _queryBuilder.BuildInsert<RamData>("Products", "id", "Brand");
+            string sql = _queryBuilder.BuildInsert<T>(tableName, propertyIgnore);
 
             var failedItems = new List<string>();
             var affected = 0;
-            int errorCount = 0;
-            int maxErrors = 100;
 
             foreach (var item in values)
             {
@@ -219,37 +209,17 @@ namespace InventorySystem.Services
                 }
                 catch (Exception ex)
                 {
-                    if (errorCount < maxErrors)
-                    {
-                        failedItems.Add(
-                            $"FAILED -> Name:{item.Name}, BrandID:{item.BrandID} ERROR -> {ex.Message}"
-                        );
-                    }
-                    errorCount++;
+                    transaction.Rollback();
+                    throw new InvalidOperationException(ex.Message);
                 }
             }
-
-            if (failedItems.Any())
-            {
-                transaction.Rollback();
-
-                // 1. Create a safe filename (yyyyMMdd_HHmmss avoids illegal characters)
-                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
-                string filePath = Path.Combine(appFolder, $"DatabaseError_{timestamp}.txt");
-
-                File.WriteAllLines(filePath, failedItems);
-
-                throw new InvalidOperationException($"One or more items failed to insert. See error log at {filePath}.");
-            }
-
             transaction.Commit();
-            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = "Products", ColumnName = "*", Affected = affected});
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = "Products", ColumnName = "*", Affected = affected });
         }
-        public void InsertCollectionToProduct(RamData item)
+        public void InsertCollectionToProduct<T>(string tableName, T item, params string[] propertyIgnore)
         {
-            InsertCollectionToProduct([item]);
+            InsertCollection(tableName,[item],propertyIgnore);
         }
-
         public void DeleteFromTable(string tableName, string condition, object value)
         {
             var safeTable = TableValidator(tableName);
@@ -272,20 +242,20 @@ namespace InventorySystem.Services
             transaction.Commit();
             OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
         }
-        public void UpdateFromTable(string tableName, string condition, RamData ramData)
+        public void UpdateFromTable<T>(string tableName, string condition, T data, params string[] propertyIgnore)
         {
             var safeTable = TableValidator(tableName);
 
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
 
-            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id", "Brand");
+            string sql = _queryBuilder.BuildUpdate<T>(safeTable, condition, propertyIgnore);
 
             using var transaction = conn.BeginTransaction();
             var affected = 0;
             try
             {
-                affected += conn.Execute(sql, ramData, transaction);
+                affected += conn.Execute(sql, data, transaction);
             }
             catch (Exception e)
             {
@@ -294,32 +264,42 @@ namespace InventorySystem.Services
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
+            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = safeTable, ColumnName = "*", Affected = affected });
         }
-        public void UpdateFromTable(string tableName, string condition, object value)
+        public List<T> SearchFromTable<T>(string tableName, string search)
         {
             var safeTable = TableValidator(tableName);
+            (string query, DynamicParameters param) = _queryBuilder.BuildSearch("SearchResult", search);
+
+            // 2. Wrap it all together
+            string finalQuery = $@"
+            WITH SearchResult AS (
+                SELECT p.*, b.Name AS Brand
+                FROM Products p
+                LEFT JOIN Brands b ON p.BrandID = b.id
+            )
+            {query}";
 
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
-
-            string sql = _queryBuilder.BuildUpdate<RamData>(safeTable, condition, "id", "Brand");
-
+            List<T> result = new();
             using var transaction = conn.BeginTransaction();
-            var affected = 0;
             try
             {
-                affected += conn.Execute(sql, value, transaction);
+                result = conn.Query<T>(finalQuery, param, transaction).ToList();
             }
             catch (Exception e)
             {
                 transaction.Rollback();
-                throw new InvalidOperationException($"Cannot Update {safeTable} with condition {condition} \n Reason {e.Message}");
+                throw new InvalidOperationException($"Query => {finalQuery}\nERROR => {e.Message}");
             }
 
             transaction.Commit();
-            OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = tableName, ColumnName = "*", Affected = affected });
+
+            OnDataChanged?.Invoke(new DataChangedEventArgs { Notify = false });
+            return result;
         }
+
         public int BrandNameToID(string name)
         {
             // Return 0 if the string is empty or whitespace
@@ -343,6 +323,7 @@ namespace InventorySystem.Services
             // If FirstOrDefault returns null (id not found), return a friendly string
             return name ?? "Unknown Brand";
         }
+
         private bool IsTableEmpty(string tableName)
         {
             using var conn = new SQLiteConnection(_connectionString);
@@ -371,18 +352,19 @@ namespace InventorySystem.Services
         private void UpdateBrandData()
         {
             using var conn = new SQLiteConnection(_connectionString);
-            var data = conn.Query<BrandData>("SELECT id, Name FROM Brands");
+            var data = conn.Query<BrandData>("SELECT * FROM Brands");
 
-            // Use StringComparer.OrdinalIgnoreCase so "nike" matches "Nike"
             _brandCache = data.ToDictionary(
                 b => b.Name,
                 b => b.id,
                 StringComparer.OrdinalIgnoreCase
             );
+            BrandCacheUpdated?.Invoke();
         }
         private void HandleDatabaseChanged(DataChangedEventArgs args)
         {
-            MessageBox.Show($"Table {args.TableName} is Changed {args.Affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
+            if(!args.Notify) return;
+            MessageBox.Show($"Data in Table {args.TableName} is Changed {args.Affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
             if (args.TableName == "Brands") { UpdateBrandData(); }
         }
         private string TableValidator(string tableName)

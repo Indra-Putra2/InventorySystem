@@ -19,7 +19,7 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
         public AddRamViewModel(IDatabaseService databaseService)
         {
             _databaseService = databaseService;
-            _databaseService.OnDataChanged += HandleDatabaseChanged;
+            _databaseService.BrandCacheUpdated += HandleBrandDataUpdate;
             ItemInput = new();
 
             foreach (var (prop, value) in RamData.GetProperties())
@@ -95,7 +95,7 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
                         ram.RamBuilder(item.Key, item.Value);
                     }
                 }
-                _databaseService.InsertCollectionToProduct(ram);
+                _databaseService.InsertCollectionToProduct("Products", ram, "id", "Brand");
 
                 RequestClose?.Invoke();
             }
@@ -105,20 +105,17 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
             }
         }
         public void Close() => RequestClose?.Invoke();
-        private void HandleDatabaseChanged(DataChangedEventArgs args)
+        private void HandleBrandDataUpdate()
         {
-            if(args.TableName == "Brands")
-            {
-                var brands = _databaseService
-                                .GetBrandDatas()
-                                .OrderBy(b => b.Key)
-                                .Select(b => b.Key)
-                                .ToList();
+            var brands = _databaseService
+                            .GetBrandDatas()
+                            .OrderBy(b => b.Key)
+                            .Select(b => b.Key)
+                            .ToList();
 
-                foreach (var i in ItemInput.OfType<InputComboModel>().Where(i => i.Key == "BrandID"))
-                {
-                    i.Options = brands;
-                }
+            foreach (var i in ItemInput.OfType<InputComboModel>().Where(i => i.Key == "BrandID"))
+            {
+                i.Options = brands;
             }
         }
     }

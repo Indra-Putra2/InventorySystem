@@ -80,7 +80,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                         ram.RamBuilder(item.Key, item.Value);
                     }
                 }
-                _databaseService.UpdateFromTable("Products", "id = @id", ram);
+                _databaseService.UpdateFromTable("Products", "id = @id", ram, "id", "Brand");
                 RequestClose?.Invoke();
             }
             catch (InvalidFilterCriteriaException ex)
