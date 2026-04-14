@@ -1,5 +1,4 @@
-﻿using InventorySystem.ViewModel;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 
 namespace InventorySystem.View.UserControls.MainWindow
 {

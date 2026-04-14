@@ -22,16 +22,25 @@ namespace InventorySystem.Services
             return csv.GetRecords<dynamic>().ToList();
         }
 
-        public List<RamData> CSVImport(string path)
+        public IEnumerable<RamData> CSVImport(string path)
         {
             using var reader = new StreamReader(path);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             csv.Context.RegisterClassMap<RamDataMap>();
-            var items = csv.GetRecords<RamData>().ToList() ?? new List<RamData>();
-            Debug.WriteLine($"Count: {items.Count}");
+            IEnumerable<RamData> items;
+            try
+            {
+                items = csv.GetRecords<RamData>().ToList() ?? new List<RamData>();
+            }
+            catch(Exception ex)
+            {
+                throw new InvalidOperationException(ex.Message);
+            }
+            
+            Debug.WriteLine($"Count: {items.Count()}");
             foreach (var item in items.Take(10))
             {
-                Debug.WriteLine($"{item.Brand} - {item.Name} - {item.Color}");
+                Debug.WriteLine($"{item.Brand} - {item.Name} - {item.TotalCapacity}");
             }
             return items;
         }

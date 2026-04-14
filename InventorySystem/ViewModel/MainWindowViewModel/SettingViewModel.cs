@@ -33,27 +33,27 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                 OnPropertyChanged();
             }
         }
-        private string _brandold;
-        public string BrandOld
+        private string _selectedValue;
+        public string SelectedValue
         {
-            get { return _brandold; }
+            get { return _selectedValue; }
             set
             {
-                _brandold = value;
-                BrandNew = value;
+                _selectedValue = value;
+                NewValue = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _brandNew;
+        private string _newValue;
 
-        public string BrandNew
+        public string NewValue
         {
-            get { return _brandNew; }
+            get { return _newValue; }
             set
             {
-                _brandNew = value;
-                IsReady = !string.IsNullOrEmpty(_brandNew);
+                _newValue = value;
+                IsReady = !string.IsNullOrEmpty(_newValue);
                 OnPropertyChanged();
                 CanUpdateBrand();
             }
@@ -65,15 +65,16 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             _databaseService = service;
             _databaseService.BrandCacheUpdated += HandleBrandUpdate;
             Options = GetOptions();
+            SelectedValue = Options[0];
         }
         private bool CanUpdateBrand()
         {
-            return !string.IsNullOrEmpty(BrandNew);
+            return !string.IsNullOrEmpty(NewValue);
         }
 
         private void UpdateBrand()
         {
-            BrandData brand = new BrandData() { id = _databaseService.BrandNameToID(BrandOld), Name = BrandNew };
+            BrandData brand = new BrandData() { id = _databaseService.BrandNameToID(SelectedValue), Name = NewValue };
             try
             {
                 _databaseService.UpdateFromTable("Brands", "id = @id", brand, "id");
@@ -85,14 +86,14 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         }
         private bool CanDeleteBrand()
         {
-            return !string.IsNullOrEmpty(BrandOld);
+            return !string.IsNullOrEmpty(SelectedValue);
         }
 
         private void DeleteBrand()
         {
             try
             {
-                var brandId = _databaseService.BrandNameToID(BrandOld);
+                var brandId = _databaseService.BrandNameToID(SelectedValue);
                 _databaseService.DeleteFromTable("Brands", "id = @id", new { id = brandId });
             }
             catch (Exception ex)
@@ -110,23 +111,23 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         }
         private void HandleBrandUpdate()
         {
-            var previousBrand = BrandNew;
+            var previousBrand = NewValue;
 
             Options = GetOptions();
 
             if (Options.Contains(previousBrand, StringComparer.OrdinalIgnoreCase))
             {
-                BrandOld = previousBrand;
+                SelectedValue = previousBrand;
             }
             else if (Options.Count > 0)
             {
-                BrandOld = Options[0];
-                BrandNew = Options[0];
+                SelectedValue = Options[0];
+                NewValue = Options[0];
             }
             else
             {
-                BrandOld = null;
-                BrandNew = null;
+                SelectedValue = null;
+                NewValue = null;
             }
         }
     }

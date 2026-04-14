@@ -1,5 +1,4 @@
 ﻿using CsvHelper.Configuration;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace InventorySystem.Model

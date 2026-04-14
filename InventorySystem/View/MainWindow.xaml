@@ -8,13 +8,11 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <TabControl>
+        <TabControl VirtualizingStackPanel.IsVirtualizing="False" 
+            VirtualizingStackPanel.VirtualizationMode="Standard">
+
             <TabItem Header="Inventory" DataContext="{Binding SpreadSheetVM}">
                 <UserControls:SpreadSheetUC/>
-            </TabItem>
-
-            <TabItem Header="Dashboard" DataContext="{Binding DashboardVM}">
-                <UserControls:DashboardUC/>
             </TabItem>
         </TabControl>
     </Grid>

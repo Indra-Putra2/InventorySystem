@@ -18,8 +18,8 @@ namespace InventorySystem
 
         public App()
         {
-            services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<ICSVService, CSVService>();
+
 
             services.AddSingleton<SpreadSheetViewModel>();
             services.AddSingleton<ISqlQueryBuilder, SqlQueryBuilder>();
@@ -29,6 +29,8 @@ namespace InventorySystem
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IWindowFactory, WindowFactory>();
 
+            services.AddTransient<DashboardWindow>();
+            services.AddTransient<DashboardViewModel>();
             services.AddTransient<AddRamViewModel>();
             services.AddTransient<AddWindow>();
             services.AddTransient<AddViewModel>();

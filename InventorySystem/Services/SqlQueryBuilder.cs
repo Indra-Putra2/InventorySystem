@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using InventorySystem.Interface;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace InventorySystem.Services
@@ -49,11 +50,13 @@ namespace InventorySystem.Services
 
             var setClause = string.Join(", ", props.Select(p => $"{p.Name} = @{p.Name}"));
 
+            Debug.WriteLine($"UPDATE {table} SET {setClause} WHERE {condition}");
+
             return $"UPDATE {table} SET {setClause} WHERE {condition}";
         }
         public (string sql, DynamicParameters param) BuildSearch(string table, string search)
         {
-            const string pattern = @"(\w+)([=><:!]+)(\w+)(\s*)";
+            const string pattern = @"(\w+)([=><:!]+)(?:""(?<value>[^""]+)""|(?<value>\S+))";
             var matches = Regex.Matches(search, pattern);
 
             var queryParts = new List<string>();
@@ -65,7 +68,7 @@ namespace InventorySystem.Services
             {
                 string columnName = match.Groups[1].Value;
                 string sqlOp = GetOperator(match.Groups[2].Value);
-                string value = match.Groups[3].Value;
+                string value = match.Groups["value"].Value;
 
                 string paramName = $"@p{i++}";
 

@@ -41,6 +41,7 @@ namespace InventorySystem.Services
         private static Dictionary<string, int> _brandCache = new(StringComparer.OrdinalIgnoreCase);
         public event Action<DataChangedEventArgs>? OnDataChanged;
         public event Action? BrandCacheUpdated;
+        public event Action? DatabaseReady;
         public DatabaseService(ICSVService CSVService, ISqlQueryBuilder sqlQueryBuilder, IStringService stringService)
         {
             _queryBuilder = sqlQueryBuilder;
@@ -91,7 +92,7 @@ namespace InventorySystem.Services
                     MemoryType           TEXT       NOT NULL,
                     MemorySpeed          INTEGER    NOT NULL,
                     Module               TEXT       NOT NULL,
-                    TotalCapacity        INTEGER    NOT NULL,
+                    TotalCapacity        REAL       NOT NULL,
                     FirstWordLatency     REAL,
                     CASLatency           REAL,
                     PricePerGB           REAL       DEFAULT (0) 
@@ -131,6 +132,7 @@ namespace InventorySystem.Services
             }
 
             UpdateBrandData();
+            DatabaseReady?.Invoke();
             return true;
         }
         public List<RamData> GetRamDatas()
@@ -189,7 +191,7 @@ namespace InventorySystem.Services
         {
             InsertValuesIntoColumn(tableName, columnName, [item]);
         }
-        public void InsertCollection<T>(string tableName,IEnumerable<T> values, params string[] propertyIgnore)
+        public void InsertCollection<T>(string tableName, IEnumerable<T> values, params string[] propertyIgnore)
         {
             using var conn = new SQLiteConnection(_connectionString);
             conn.Open();
@@ -197,7 +199,6 @@ namespace InventorySystem.Services
             using var transaction = conn.BeginTransaction();
 
             string sql = _queryBuilder.BuildInsert<T>(tableName, propertyIgnore);
-
             var failedItems = new List<string>();
             var affected = 0;
 
@@ -216,9 +217,9 @@ namespace InventorySystem.Services
             transaction.Commit();
             OnDataChanged?.Invoke(new DataChangedEventArgs { TableName = "Products", ColumnName = "*", Affected = affected });
         }
-        public void InsertCollectionToProduct<T>(string tableName, T item, params string[] propertyIgnore)
+        public void InsertCollection<T>(string tableName, T item, params string[] propertyIgnore)
         {
-            InsertCollection(tableName,[item],propertyIgnore);
+            InsertCollection(tableName, [item], propertyIgnore);
         }
         public void DeleteFromTable(string tableName, string condition, object value)
         {
@@ -363,7 +364,7 @@ namespace InventorySystem.Services
         }
         private void HandleDatabaseChanged(DataChangedEventArgs args)
         {
-            if(!args.Notify) return;
+            if (!args.Notify) return;
             MessageBox.Show($"Data in Table {args.TableName} is Changed {args.Affected} is Affected", "Database", MessageBoxButton.OK, MessageBoxImage.Information);
             if (args.TableName == "Brands") { UpdateBrandData(); }
         }

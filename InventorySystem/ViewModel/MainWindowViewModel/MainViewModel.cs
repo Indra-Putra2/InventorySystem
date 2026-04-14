@@ -18,5 +18,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                 spreadSheet.Initialize();
             }
         }
+
+        
     }
 }

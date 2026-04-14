@@ -1,0 +1,63 @@
+﻿<Window x:Class="InventorySystem.View.DashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:InventorySystem.View"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        xmlns:Model="clr-namespace:InventorySystem.Model"
+        mc:Ignorable="d"
+        Title="DashboardWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="65"/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        
+        <Grid>
+            <ItemsControl Grid.Row="0" ItemsSource="{Binding DashboardStats}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="5"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="2.5" BorderThickness="2" Background="LightGray" CornerRadius="5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="18"/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="{Binding Label}" 
+                               Margin="10,0,0,0" 
+                               FontWeight="Medium" 
+                               HorizontalAlignment="Left" 
+                               VerticalAlignment="Bottom"/>
+                                <TextBlock Text="{Binding Value}" 
+                               Grid.Row="1" 
+                               FontSize="25" 
+                               Margin="10,0,0,0" 
+                               FontWeight="Bold" 
+                               HorizontalAlignment="Left" 
+                               VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <lvc:CartesianChart 
+            Grid.Row="1"
+            Series="{Binding Series1}"
+            XAxes="{Binding XAxes1}"
+            YAxes="{Binding YAxes1}"
+            LegendPosition="{Binding Legend1}"
+            
+            ZoomMode="Both">
+        </lvc:CartesianChart>
+    </Grid>
+</Window>

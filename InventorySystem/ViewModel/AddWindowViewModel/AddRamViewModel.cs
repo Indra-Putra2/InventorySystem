@@ -95,7 +95,7 @@ namespace InventorySystem.ViewModel.AddWindowViewModel
                         ram.RamBuilder(item.Key, item.Value);
                     }
                 }
-                _databaseService.InsertCollectionToProduct("Products", ram, "id", "Brand");
+                _databaseService.InsertCollection("Products", ram, "id", "Brand");
 
                 RequestClose?.Invoke();
             }

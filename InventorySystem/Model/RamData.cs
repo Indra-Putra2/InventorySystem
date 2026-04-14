@@ -11,7 +11,7 @@ namespace InventorySystem.Model
         public string MemoryType { get; set; }
         public int MemorySpeed { get; set; }
         public string Module { get; set; }
-        public int TotalCapacity { get; set; }
+        public double TotalCapacity { get; set; }
 
         public double FirstWordLatency { get; set; }
         public double CASLatency { get; set; }

@@ -11,6 +11,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
 {
     public class SpreadSheetViewModel : ViewModelBase
     {
+        private readonly DashboardWindow _dashboard;
         private readonly ICSVService _csvService;
         private readonly ISelectionService _selectionService;
         private readonly IDatabaseService _databaseService;
@@ -23,6 +24,8 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         public RelayCommand DeleteCommand => new RelayCommand(execute => DeleteItem(), canExecute => CanDelete());
         public RelayCommand SearchCommand => new RelayCommand(execute => Search());
         public RelayCommand SettingCommand => new RelayCommand(execute => Setting());
+        public RelayCommand DashboardCommand => new RelayCommand(execute => Dashboard());
+
         public string ItemName => SelectedItem?.Name ?? "Select an Item";
         public string SearchValue { get; set; } = string.Empty;
         private RamData _selectedItem;
@@ -105,14 +108,14 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             if (result == true)
             {
                 string filePath = dialog.FileName;
-                var items = _csvService.CSVImport(filePath);
                 try
                 {
+                    var items = _csvService.CSVImport(filePath);
                     foreach (var item in items)
                     {
                         item.BrandID = _databaseService.BrandNameToID(item.Brand);
                     }
-                    _databaseService.InsertCollectionToProduct("Products",items, "id", "Brand");
+                    _databaseService.InsertCollection("Products",items, "id", "Brand");
                 }
                 catch (Exception ex)
                 {
@@ -172,6 +175,12 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         private void Setting()
         {
             var window = _WindowFactory.Create<SettingWindow>();
+            window.ShowDialog();
+        }
+
+        private void Dashboard()
+        {
+            var window = _WindowFactory.Create<DashboardWindow>();
             window.ShowDialog();
         }
     }
