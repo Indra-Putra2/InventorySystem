@@ -10,13 +10,24 @@
         Title="DashboardWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="45"/>
             <RowDefinition Height="65"/>
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        
-        <Grid>
-            <ItemsControl Grid.Row="0" ItemsSource="{Binding DashboardStats}">
+
+        <Grid Margin="25,5,25,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="0.3*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Text="{Binding SearchValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="25" FontSize="14"/>
+            <Button Grid.Column="1" Content="Search" Command="{Binding SearchCommand}" Height="25"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding DashboardStats}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="5"/>
@@ -32,32 +43,119 @@
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="{Binding Label}" 
-                               Margin="10,0,0,0" 
-                               FontWeight="Medium" 
-                               HorizontalAlignment="Left" 
-                               VerticalAlignment="Bottom"/>
+                                   Margin="10,0,0,0" 
+                                   FontWeight="Medium" 
+                                   HorizontalAlignment="Left" 
+                                   VerticalAlignment="Bottom"/>
                                 <TextBlock Text="{Binding Value}" 
-                               Grid.Row="1" 
-                               FontSize="25" 
-                               Margin="10,0,0,0" 
-                               FontWeight="Bold" 
-                               HorizontalAlignment="Left" 
-                               VerticalAlignment="Center"/>
+                                   Grid.Row="1" 
+                                   FontSize="25" 
+                                   Margin="10,0,0,0" 
+                                   FontWeight="Bold" 
+                                   HorizontalAlignment="Left" 
+                                   VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Grid>
-
-        <lvc:CartesianChart 
-            Grid.Row="1"
-            Series="{Binding Series1}"
-            XAxes="{Binding XAxes1}"
-            YAxes="{Binding YAxes1}"
-            LegendPosition="{Binding Legend1}"
+        
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width=".25*"/>
+            </Grid.ColumnDefinitions>
             
-            ZoomMode="Both">
-        </lvc:CartesianChart>
+            <lvc:CartesianChart 
+                Series="{Binding ScatterSeries}"
+                XAxes="{Binding ScatterAxisX}"
+                YAxes="{Binding ScatterAxisY}"
+                LegendPosition="{Binding ScatterLegend}"
+                ZoomMode="Both">
+            </lvc:CartesianChart>
+        </Grid>
+
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".3*"/>
+                <ColumnDefinition Width=".3*"/>
+                <ColumnDefinition Width=".2*"/>
+                <ColumnDefinition Width=".2*"/>
+            </Grid.ColumnDefinitions>
+            
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Viewbox>
+                    <TextBlock Text="Average Price" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Viewbox>
+                <lvc:CartesianChart
+                    Grid.Row="1"
+                    Series="{Binding BarPrice}"
+                    XAxes="{Binding BarPriceX}"
+                    YAxes="{Binding BarPriceY}"
+                    ZoomMode="Both">
+                </lvc:CartesianChart>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Viewbox>
+                    <TextBlock Text="Average Price Per GB" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Viewbox>
+                <lvc:CartesianChart
+                    Grid.Row="1"
+                    Series="{Binding BarPricePerGB}"
+                    XAxes="{Binding BarPerGBX}"
+                    YAxes="{Binding BarPerGBY}"
+                    ZoomMode="Both">
+                </lvc:CartesianChart>
+            </Grid>
+
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Viewbox>
+                    <TextBlock Text="DDR4 VS DDR5 Comparison" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Viewbox>
+
+                <lvc:CartesianChart
+                    Grid.Row="1"
+                    Series="{Binding BarOverallComparison}"
+                    XAxes="{Binding BarOverallX}"
+                    ZoomMode="Both">
+                </lvc:CartesianChart>
+            </Grid>
+
+            
+            <Grid Grid.Column="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Viewbox>
+                    <TextBlock Text="Capacity Distribution" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Viewbox>
+                
+                <lvc:CartesianChart
+                    Margin="0,10,0,0"
+                    Grid.Row="1"
+                    Series="{Binding BarCapacityDistribution}"
+                    XAxes="{Binding BarcapacityX}"
+                    YAxes="{Binding BarcapacityY}"
+                    ZoomMode="Both">
+                </lvc:CartesianChart>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

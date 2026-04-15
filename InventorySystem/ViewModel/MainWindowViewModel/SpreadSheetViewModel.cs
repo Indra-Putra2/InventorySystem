@@ -11,7 +11,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
 {
     public class SpreadSheetViewModel : ViewModelBase
     {
-        private readonly DashboardWindow _dashboard;
+        private DashboardWindow _dashboard;
         private readonly ICSVService _csvService;
         private readonly ISelectionService _selectionService;
         private readonly IDatabaseService _databaseService;
@@ -180,8 +180,22 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
 
         private void Dashboard()
         {
-            var window = _WindowFactory.Create<DashboardWindow>();
-            window.ShowDialog();
+            if (_dashboard == null)
+            {
+                _dashboard = _WindowFactory.Create<DashboardWindow>();
+
+                // Subscribe to the closed event
+                _dashboard.Closed += (s, e) =>
+                {
+                    _dashboard = null; // Clean up the reference
+                };
+
+                _dashboard.Show();
+            }
+            else
+            {
+                _dashboard.Activate();
+            }
         }
     }
 }
