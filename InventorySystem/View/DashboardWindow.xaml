@@ -7,16 +7,18 @@
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         xmlns:Model="clr-namespace:InventorySystem.Model"
         mc:Ignorable="d"
-        Title="DashboardWindow" Height="450" Width="800">
+        Title="DashboardWindow" Height="450" Width="800"
+        WindowState="Maximized">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="45"/>
             <RowDefinition Height="65"/>
             <RowDefinition/>
             <RowDefinition/>
+            <RowDefinition Height="65"/>
         </Grid.RowDefinitions>
 
-        <Grid Margin="25,5,25,5">
+        <Grid Margin="15,5,15,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="0.3*"/>
@@ -26,7 +28,7 @@
             <Button Grid.Column="1" Content="Search" Command="{Binding SearchCommand}" Height="25"/>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Margin="15,0,15,0">
             <ItemsControl ItemsSource="{Binding DashboardStats}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -36,56 +38,90 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="2.5" BorderThickness="2" Background="LightGray" CornerRadius="5">
+                        <Border BorderThickness="2" Background="LightGreen" CornerRadius="5">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="18"/>
+                                    <RowDefinition Height="23"/>
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="{Binding Label}" 
-                                   Margin="10,0,0,0" 
-                                   FontWeight="Medium" 
-                                   HorizontalAlignment="Left" 
-                                   VerticalAlignment="Bottom"/>
+                                <TextBlock Text="{Binding Label}"
+                                    Margin="15,5,0,0" 
+                                    FontWeight="SemiBold"
+                                    FontSize="15"
+                                    HorizontalAlignment="Left" 
+                                    VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Value}" 
-                                   Grid.Row="1" 
-                                   FontSize="25" 
-                                   Margin="10,0,0,0" 
-                                   FontWeight="Bold" 
-                                   HorizontalAlignment="Left" 
-                                   VerticalAlignment="Center"/>
+                                    Grid.Row="1" 
+                                    FontSize="25" 
+                                    Margin="15,0,0,0" 
+                                    FontWeight="Bold" 
+                                    HorizontalAlignment="Left" 
+                                    VerticalAlignment="Top"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Grid>
-        
-        <Grid Grid.Row="2">
+
+        <Grid Grid.Row="2" Margin="15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width=".25*"/>
             </Grid.ColumnDefinitions>
-            
-            <lvc:CartesianChart 
-                Series="{Binding ScatterSeries}"
-                XAxes="{Binding ScatterAxisX}"
-                YAxes="{Binding ScatterAxisY}"
-                LegendPosition="{Binding ScatterLegend}"
-                ZoomMode="Both">
-            </lvc:CartesianChart>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <Viewbox Grid.Row="0">
+                    <TextBlock Text="Value vs Performance" FontWeight="SemiBold"/>
+                </Viewbox>
+                
+                <lvc:CartesianChart
+                    Grid.Row="1"
+                    Series="{Binding ScatterSeries}"
+                    XAxes="{Binding ScatterAxisX}"
+                    YAxes="{Binding ScatterAxisY}"
+                    LegendPosition="{Binding ScatterLegend}"
+                    LegendTextSize="12"
+                    ZoomMode="Both"
+                    FindingStrategy="ExactMatch">
+                </lvc:CartesianChart>
+            </Grid>
+
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Viewbox Grid.Row="0">
+                    <TextBlock Text="Top 5 Most Popular Brand" FontWeight="SemiBold"/>
+                </Viewbox>
+                <lvc:PieChart
+                    Grid.Row="1"
+                    Series="{Binding PieChartSeries}"
+                    TooltipPosition="Center"
+                    LegendPosition="Hidden"
+                    LegendTextSize="10">
+                </lvc:PieChart>
+            </Grid>
+
         </Grid>
 
-
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width=".3*"/>
                 <ColumnDefinition Width=".3*"/>
                 <ColumnDefinition Width=".2*"/>
                 <ColumnDefinition Width=".2*"/>
             </Grid.ColumnDefinitions>
-            
-            <Grid Grid.Column="0">
+
+            <Grid Grid.Column="0" Margin="15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height=".1*"/>
                     <RowDefinition Height="*"/>
@@ -102,7 +138,7 @@
                 </lvc:CartesianChart>
             </Grid>
 
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="1" Margin="15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height=".1*"/>
                     <RowDefinition Height="*"/>
@@ -120,7 +156,7 @@
             </Grid>
 
 
-            <Grid Grid.Column="2">
+            <Grid Grid.Column="2" Margin="15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height=".1*"/>
                     <RowDefinition Height="*"/>
@@ -137,8 +173,7 @@
                 </lvc:CartesianChart>
             </Grid>
 
-            
-            <Grid Grid.Column="3">
+            <Grid Grid.Column="3" Margin="15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height=".1*"/>
                     <RowDefinition Height="*"/>
@@ -146,9 +181,9 @@
                 <Viewbox>
                     <TextBlock Text="Capacity Distribution" FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Viewbox>
-                
+
                 <lvc:CartesianChart
-                    Margin="0,10,0,0"
+                    Background="Transparent"
                     Grid.Row="1"
                     Series="{Binding BarCapacityDistribution}"
                     XAxes="{Binding BarcapacityX}"
@@ -156,6 +191,42 @@
                     ZoomMode="Both">
                 </lvc:CartesianChart>
             </Grid>
+        </Grid>
+
+        <Grid Grid.Row="4" Margin="0">
+            <ItemsControl ItemsSource="{Binding RecomendedStat}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderThickness="2" Background="LightGreen" CornerRadius="5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="23"/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="{Binding Label}"
+                                    Margin="15,5,0,0" 
+                                    FontWeight="SemiBold"
+                                    FontSize="15"
+                                    HorizontalAlignment="Left" 
+                                    VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Value}" 
+                                    Grid.Row="1"
+                                    FontSize="20"
+                                    Margin="15,0,0,0" 
+                                    FontWeight="Bold" 
+                                    HorizontalAlignment="Left" 
+                                    VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </Grid>
 </Window>

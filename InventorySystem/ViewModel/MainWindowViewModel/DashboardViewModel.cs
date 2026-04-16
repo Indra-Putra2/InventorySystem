@@ -33,7 +33,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         }
         public RelayCommand SearchCommand => new RelayCommand(execute => Search());
 
-        private bool _isMaximized;
+        private bool _isMaximized = true;
         public bool IsMaximized
         {
             get { return _isMaximized; }
@@ -110,17 +110,38 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
         }
         public Axis[] BarcapacityY { get; set; }
         public Axis[] BarcapacityX { get; set; }
-        public ObservableCollection<DetailItem> DashboardStats { get; set; }
+
+        private ISeries[] _pieChartSeries;
+        public ISeries[] PieChartSeries
+        {
+            get { return _pieChartSeries; }
+            set { _pieChartSeries = value; OnPropertyChanged(); }
+        }
+        private ObservableCollection<DetailItem> _dashboardStats;
+        public ObservableCollection<DetailItem> DashboardStats
+        {
+            get { return _dashboardStats; }
+            set { _dashboardStats = value; OnPropertyChanged(); }
+        }
+        private ObservableCollection<DetailItem> _recomendedStat;
+        public ObservableCollection<DetailItem> RecomendedStat
+        {
+            get { return _recomendedStat; }
+            set { _recomendedStat = value; OnPropertyChanged(); }
+        }
+
         public DashboardViewModel(IDatabaseService database)
         {
+            ScatterLegend = LegendPosition.Right;
             _database = database;
 
             var datas = _database.GetRamDatas();
             var dataNonZero = datas.Where(i => i.Price > 0);
-
+            var reviewNonZero = datas.Where(i => i.ReviewCount > 0);
             BuildDashboardStats(datas);
-
+            BuildRecomendedStats(datas);
             var brandedGroups = dataNonZero.GroupBy(i => i.Brand);
+            var brandedReviewGroups = reviewNonZero.GroupBy(i => i.Brand);
             var capacityGroups = dataNonZero.GroupBy(i => i.TotalCapacity).OrderBy(g => g.Key).ToList();
 
             ScatterSeries = BuildScatterPlot(brandedGroups);
@@ -128,7 +149,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             BarPricePerGB = BuildBarPlotPricePerGB(brandedGroups);
             BarOverallComparison = BuildOverallComparisonPlot(dataNonZero);
             BarCapacityDistribution = BuildBarCapacityDistribution(capacityGroups);
-
+            PieChartSeries = BuildPieChartMostPopularBrands(brandedReviewGroups);
             BuildAllLabel(dataNonZero, brandedGroups, capacityGroups);
         }
         private string GetAverage<T>(IEnumerable<T> source, Func<T, double> selector)
@@ -143,14 +164,19 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             {
                 var result = _database.SearchFromTable<RamData>("Products", SearchValue);
                 var NonZero = result.Where(i => i.Price > 0);
+                var ReviewNonZero = result.Where(i => i.ReviewCount > 0);
                 var brandGroup = NonZero.GroupBy(i => i.Brand);
+                var brandReviewGroup = ReviewNonZero.GroupBy(i => i.Brand);
                 var capacityGroups = NonZero.GroupBy(i => i.TotalCapacity).OrderBy(g => g.Key).ToList();
 
+                BuildDashboardStats(result);
+                BuildRecomendedStats(result);
                 ScatterSeries = BuildScatterPlot(brandGroup);
                 BarPrice = BuildBarPlotAveragePrice(brandGroup);
                 BarPricePerGB = BuildBarPlotPricePerGB(brandGroup);
                 BarOverallComparison = BuildOverallComparisonPlot(NonZero);
                 BarCapacityDistribution = BuildBarCapacityDistribution(capacityGroups);
+                PieChartSeries = BuildPieChartMostPopularBrands(brandReviewGroup);
 
                 BuildAllLabel(NonZero, brandGroup, capacityGroups);
             }
@@ -166,7 +192,7 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
             var avgRating = GetAverage(datas, i => i.Rating);
             var avgPrice = GetAverage(datas, i => (double)i.Price);
             decimal best = datas
-                .Where(i => i.PricePerGB > 0)
+                .Where(i => i.PricePerGB > 0 && (i.MemoryType == "DDR4" || i.MemoryType == "DDR5"))
                 .Select(i => i.PricePerGB)
                 .DefaultIfEmpty()
                 .Min();
@@ -177,7 +203,49 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                 new DetailItem { Label = "Average Speed", Value = $"{avgSpeed} MHz" },
                 new DetailItem { Label = "Average Capacity (GB)", Value = $"{avgCapacity}GB" },
                 new DetailItem { Label = "Average Rating", Value = $"{avgRating} Rating" },
-                new DetailItem { Label = "Best Value RAM", Value = $"${best} Per GB"}
+                new DetailItem { Label = "Best Value RAM (DDR4/DDR5)", Value = $"${best} Per GB"}
+            };
+        }
+        private void BuildRecomendedStats(List<RamData> datas)
+        {
+            var minPpg = datas.Where(x => x.PricePerGB > 0).Min(x => x.PricePerGB);
+            var maxPpg = datas.Where(x => x.PricePerGB > 0).Max(x => x.PricePerGB);
+
+            var minRating = datas.Where(x => x.Rating > 0).Min(x => x.Rating);
+            var maxRating = datas.Where(x => x.Rating > 0).Max(x => x.Rating);
+
+            var bestValue = datas
+                .Where(i => i.PricePerGB > 0 && (i.MemoryType == "DDR4" || i.MemoryType == "DDR5"))
+                .OrderBy(i => i.PricePerGB)
+                .Select(i=>i.Name)
+                .First();
+
+            var bestPerformance = datas.OrderByDescending(i=>i.MemorySpeed).Select(i => i.Name).First();
+            var bestOverall = datas
+                .Select(ram => new
+                {
+                    Ram = ram,
+                    Score =
+                        ((ram.Rating - minRating) / (maxRating - minRating)) * 0.6 +
+                        (((double)maxPpg - (double)ram.PricePerGB) / ((double)maxPpg - (double)minPpg)) * 0.4
+                })
+                .OrderByDescending(x => x.Score)
+                .First()
+                .Ram.Name;
+
+            var bestBudget = datas
+                .Where(i => i.PricePerGB > 0 &&
+                            (i.MemoryType == "DDR4" || i.MemoryType == "DDR5"))
+                .OrderBy(i => i.PricePerGB)
+                .Select(i => i.Name)
+                .First();
+
+            RecomendedStat = new ObservableCollection<DetailItem>
+            {
+                new DetailItem { Label = "Best Value RAM", Value = $"{bestValue}" },
+                new DetailItem { Label = "Best Performance RAM", Value = $"{bestPerformance}" },
+                new DetailItem { Label = "Best Overall RAM", Value = $"{bestOverall}" },
+                new DetailItem { Label = "Best Budget RAM", Value = $"{bestBudget}" },
             };
         }
         private ISeries[] BuildScatterPlot(IEnumerable<IGrouping<string, RamData>> groups)
@@ -218,13 +286,23 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                 {
                     Name = "Average Price",
                     Values = ordered.Select(i=>i.Avg).ToArray(),
+                    YToolTipLabelFormatter = point => $"{point.Model:C2}",
+                    Fill = new LinearGradientPaint(
+                        new[]
+                        {
+                            new SKColor(0, 150, 255, 180),
+                            new SKColor(255, 80, 80, 220),
+                        },
+                        new SKPoint(0, 2),
+                        new SKPoint(0, 0)
+                    )
                 }
             };
         }
         private ISeries[] BuildBarPlotPricePerGB(IEnumerable<IGrouping<string, RamData>> groups)
         {
             var orderedGB = groups
-                .Select(g => (g.Key, Avg: g.Average(x => (double)x.Price)))
+                .Select(g => (g.Key, Avg: g.Average(x => (double)x.PricePerGB)))
                 .OrderBy(x => x.Avg)
                 .ToList();
 
@@ -234,6 +312,16 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                 {
                     Name = "Price Per GB",
                     Values = orderedGB.Select(i=>i.Avg).ToArray(),
+                    YToolTipLabelFormatter = point => $"{point.Model:C2}",
+                    Fill = new LinearGradientPaint(
+                        new[]
+                        {
+                            new SKColor(0, 150, 255, 180),
+                            new SKColor(255, 80, 80, 220),
+                        },
+                        new SKPoint(0, (float)1.5),
+                        new SKPoint(0, 0)
+                    )
                 },
             };
         }
@@ -260,11 +348,31 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                     Name = "DDR4",
                     // The order here MUST match your X-Axis labels!
                     Values = new double[] { ddr4Speed, ddr4Price, ddr4Gb },
-                },
+                    YToolTipLabelFormatter = point =>
+                    {
+                        return point.Index switch
+                        {
+                            0 => $"{point.Model:N0} MHz",    // First value: Speed
+                            1 => $"{point.Model:C2}",       // Second value: Price (Currency)
+                            2 => $"{point.Model:N1} GB",     // Third value: Capacity
+                            _ => $"{point.Model}"            // Fallback
+                        };
+                    }
+        },
                 new ColumnSeries<double>
                 {
                     Name = "DDR5",
-                    Values = new double[] { ddr5Speed, ddr5Price, ddr5Gb }
+                    Values = new double[] { ddr5Speed, ddr5Price, ddr5Gb },
+                    YToolTipLabelFormatter = point =>
+                    {
+                        return point.Index switch
+                        {
+                            0 => $"{point.Model:N0} MHz",
+                            1 => $"{point.Model:C2}",
+                            2 => $"{point.Model:N1} GB",
+                            _ => $"{point.Model}"
+                        };
+                    }
                 }
             };
         }
@@ -285,6 +393,21 @@ namespace InventorySystem.ViewModel.MainWindowViewModel
                     }
                 }
             };
+        }
+        private ISeries[] BuildPieChartMostPopularBrands(IEnumerable<IGrouping<string, RamData>> groups)
+        {
+            var total = groups.Sum(g => g.Sum(x => x.ReviewCount * x.Rating));
+
+            return groups.Select(g => new PieSeries<double>
+            {
+                Name = g.Key,
+                Values = new double[] { g.Sum(x => x.ReviewCount * x.Rating) },
+                ShowDataLabels = true,
+                DataLabelsFormatter = point => $"{g.Key} {point.Model / total * 100:F1}%",
+                ToolTipLabelFormatter = point =>
+                $"{point.Model / total * 100:F1}%",
+                DataLabelsPaint = new SolidColorPaint(SKColors.Black),
+            }).Take(5).ToArray<ISeries>();
         }
         private (Axis, Axis) BuildAxis(string Xname, string Yname, string[] labelsX = null, string[] labelsY = null, int labelrotY = 0, int LabelrotX = 0)
         {
